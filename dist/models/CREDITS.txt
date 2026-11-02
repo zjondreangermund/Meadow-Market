@@ -1,0 +1,18 @@
+Quaternius — Ultimate Animated Animal Pack (July 2021)
+Horse.gltf and Cow.gltf, authored by Quaternius.
+Source: https://quaternius.com/packs/ultimateanimatedanimals.html
+Original public downloads: https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk
+
+Quaternius — Farm Animal Pack (June 2018)
+Pig.fbx, authored by Quaternius.
+Source: https://quaternius.com/packs/farmanimal.html
+Original public downloads: https://drive.google.com/drive/folders/1is1ax2V0mIEDS7BbbzBV_x2Pabya1dVJ
+
+Both packs are offered by their author under CC0 1.0 Universal.
+https://creativecommons.org/publicdomain/zero/1.0/
+These are stylised, rigged models; they are not photorealistic assets.
+Pig uses its supplied idle animation with a custom additive leg gait.
+Horse and cow use supplied idle, walk and eating clips. Horse also includes Gallop.
+
+Three.js and example loaders/utilities: Copyright Three.js authors. MIT licence.
+https://github.com/mrdoob/three.js/blob/r170/LICENSE
