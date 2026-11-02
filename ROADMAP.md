@@ -17,3 +17,13 @@
 
 ## Confirmed user experience requirements
 3D CropBytes-like walkable farm; visible human farmer; animals eat/drink at their bowls; wells supply water; interdependent producer roles; per-day ration requirements; no sliding; pinch zoom/two-touch pan; action menu immediately on click; understandable picture-based tasks. Do not revert to a dashboard as the main game.
+
+## New foundations shipped
+- [x] Pig FBX opacity fix with regression coverage.
+- [x] Rigged male/female farmer, walk and task animation clips.
+- [x] Visible work duration and task props.
+- [x] Maize stalk/leaf/cob art and building facade detail.
+- [x] Per-horse stats, daily training, care recovery and local race calculator.
+- [ ] Animated racetrack, galloping presentation, replay and race history.
+- [ ] Trusted server simulation, tamper resistance and multiplayer matchmaking.
+- [ ] Photorealistic art direction / final bespoke farmer and animals.

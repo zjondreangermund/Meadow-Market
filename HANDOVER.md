@@ -25,10 +25,10 @@ A prior assistant described a polished male/female farmer, natural locomotion/in
 
 ## Important limitations
 - Updated after the export: stable now has an open entrance, navigable aisle, two horse stalls, gates and roof cutaway; horses are inside. See dist/stable.js.
-- Farmer has improved shaped body/limbs, facial features, hair, overalls, belt, hands and boots. It remains procedural stylised art, not a photorealistic character asset.
+- Farmer now loads CC0 Quaternius male/female rigged GLB models with Idle_Neutral, Walk and Interact clips. Procedural avatar remains a load-failure fallback. Art remains stylised, not photorealistic. Tasks animate for three seconds at the station before committing the action.
 - Models are stylised, NOT photorealistic/racing-quality final art.
 - No real user marketplace, login, secure server authority, database or payment integration.
-- Real-time daily simulation, animal lifecycle, breeding, racing and cash-backed surrender values are NOT implemented in the current 3D resource game. management.html has older independent experiments; do not confuse them with current features.
+- Real-time daily simulation, animal lifecycle, breeding, animated competitive racing and cash-backed surrender values are NOT implemented in the current 3D resource game. management.html has older independent experiments; do not confuse them with current features.
 - Local progress is stored under `meadow-cycle-v2`. Old earlier prototypes used other storage keys. Do not overwrite user progress casually.
 - Cloud-browser WebGL was unavailable. Syntax, resource logic, scene construction, generated handlers, gesture state and model animation data were tested; rendered graphics still need device QA.
 
@@ -37,3 +37,12 @@ Own original game inspired by CropBytes, not copied branding/art/code. Off-chain
 
 ## Next chat starting prompt
 “Continue Meadow Market from this repository. Read HANDOVER.md and ROADMAP.md. Continue refining the farmer and walk-in stables after device playtesting, preserving touch gestures, instant action menus, task cards and the production cycle. Do not claim unfinished real-money or multiplayer features are live. Keep the existing Sites project for deployment.”
+
+## Visual and horse update — 2 November 2026
+Pig FBX materials had zero opacity; runtime repair forces the opaque pig materials to opacity 1, with a regression test. Maize now has stalks, curved leaves, cobs and instanced kernels, plus short stalks after harvest until the next farm day. Buildings have foundations, door braces, window frames, shutters, planters, lanterns and barrels.
+
+Horse profiles persist in the existing save without resetting progress. Each horse has speed, stamina, power, energy, condition and last trained day. Training consumes 2 feed, 2 water and 25 energy; once per horse/day, +1 selected stat capped at 95. Complete daily horse rations restore 35 energy and 4 condition at day advance; missed rations restore 5 energy and reduce condition by 6.
+
+Practice races are a local calculator for 400/800/1600m. A seeded numeric model uses pace, launch power, fatigue resistance, energy, condition and bounded form variation. No track animation, entry charges, payouts or secure multiplayer results. See RACING.md before extending.
+
+Chicken trough approach now uses the centre gate opening; the old offset approach overlapped the fence. The full scene smoke test covers walking to the chicken water station and committing its ration only after the animated work period.

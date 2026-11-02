@@ -38,3 +38,6 @@ Server-authoritative accounts/inventory, real player listings and atomic settlem
 
 ## Walk-in stable / farmer update
 The stable is now built by dist/stable.js, with an open central entrance/aisle, horse stalls, clickable gates, straw bedding and interior horse troughs. It replaces the original solid stable collider. Roof/front facade cut away while the player is inside. Horse spawn/wander targets are inside the stalls. Farmer appearance now includes shaped limbs, overalls, belt, face, hair, hand and boot details; it remains an original procedural stylised character, not a photorealistic imported person. Stable geometry/collision/cutaway checks: node tests/stable.test.mjs.
+
+### Visual / horse follow-up
+See HANDOVER.md for new rigged farmer assets, delayed task completion, pig opacity repair, crop/building detail and horse training. New modules: farmer-rig.js, farm-art.js, horses.js. Farmer and animal imports retain fallbacks on network/parse failure. Browser-local storage key and existing inventories are preserved. Test all five files in tests; WebGL device QA remains outstanding.
