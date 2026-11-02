@@ -28,7 +28,7 @@ A prior assistant described a polished male/female farmer, natural locomotion/in
 - Farmer now loads CC0 Quaternius male/female rigged GLB models with Idle_Neutral, Walk and Interact clips. Procedural avatar remains a load-failure fallback. Art remains stylised, not photorealistic. Tasks animate for three seconds at the station before committing the action.
 - Models are stylised, NOT photorealistic/racing-quality final art.
 - No real user marketplace, login, secure server authority, database or payment integration.
-- Real-time daily simulation, animal lifecycle, breeding, animated competitive racing and cash-backed surrender values are NOT implemented in the current 3D resource game. management.html has older independent experiments; do not confuse them with current features.
+- Real-time daily simulation, animal lifecycle, breeding, server-authoritative competitive racing and cash-backed surrender values are NOT implemented in the current 3D resource game. management.html has older independent experiments; do not confuse them with current features.
 - Local progress is stored under `meadow-cycle-v2`. Old earlier prototypes used other storage keys. Do not overwrite user progress casually.
 - Cloud-browser WebGL was unavailable. Syntax, resource logic, scene construction, generated handlers, gesture state and model animation data were tested; rendered graphics still need device QA.
 
@@ -46,3 +46,6 @@ Horse profiles persist in the existing save without resetting progress. Each hor
 Practice races are a local calculator for 400/800/1600m. A seeded numeric model uses pace, launch power, fatigue resistance, energy, condition and bounded form variation. No track animation, entry charges, payouts or secure multiplayer results. See RACING.md before extending.
 
 Chicken trough approach now uses the centre gate opening; the old offset approach overlapped the fence. The full scene smoke test covers walking to the chicken water station and committing its ration only after the animated work period.
+
+## Skyline Cup racing — 2 November 2026
+`racing.html`, `race.css`, `race-engine.js`, `race-scene.js`, `race.js` implement the local 3D event requested next. Farm horse profiles link directly into the paddock with the selected horse. Read RACING.md for controls, architecture, remaining server work and the WebGL verification limit. Run all nine tests in `tests/`. Browser save `meadow-cycle-v2` is only read, never rewritten by racing; local race history/replay use separate keys. Preserve the existing Site identity and keep GitHub source synchronized.

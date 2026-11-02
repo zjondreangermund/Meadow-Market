@@ -1,15 +1,27 @@
-# Horse racing design
+# Skyline Cup — playable 3D racing event
 
-Current implementation is a practice calculator, not a competitive race service.
+Enter through **Farm → Horses → Enter Meadow Park**, or open `dist/racing.html`. Existing horse profiles come from `meadow-cycle-v2`; racing never rewrites that save. Training and care still change the horses' starting stats through the farm.
 
-## Race engine
-Use coded rules for results. Do not ask a language model to select a winner. The same stats, distance, rules version and random seed should replay the same result. AI may later generate commentary or choose a rival's strategy within fixed rules; the race engine must validate strategy and determine the outcome.
+## Experience shipped
+- A volumetric 3D oval with slight elevation variation, rails, starting gates, terraced grandstands, instanced spectators, fluttering flags, a pavilion, infield gardens and mountain backdrop.
+- Six independently animated, rigged horses with original articulated jockeys, silks, helmets, reins, saddlecloths and scarves. Toon lighting and the existing licensed horse asset provide a stylised anime-inspired look; these are not 2D racing sprites.
+- A three-second start, live order, race calls, stamina bar, lane controls, three pace settings and one Skybreak burst. Speed lines respect reduced-motion settings. Optional synthesized crowd and hoof audio starts only on user interaction and is muted by default.
+- Director camera sequences plus Chase, Rail and Broadcast views; sprint zoom, finish slowdown, confetti, timed results, ten local history entries and an exact replay of the last run during the session. Replay is also saved for future UI extensions.
+- 400 m sprint, 800 m classic and 1600 m endurance. Desktop keys and mobile buttons. Pause/resume, tab-hide pause, retirement and WebGL failure messaging.
 
-The local prototype simulates 20 m segments. Speed controls base pace; power affects the opening 100 m; stamina delays fatigue and reduces its penalty. Energy and condition multiply pace. A bounded per-horse form factor (0.96–1.04) varies the result. Distances are 400, 800 and 1600 m. This is provisional game balancing, not a biological model or proven economic design.
+## Simulation contract
+`race-engine.js` is GPU-independent. Its `STEP` is 1/60 second; browser rendering advances an accumulator and never chooses a winner. Snapshot horse attributes and seed plus tick-indexed commands replay the same result. Rules version: `skyline-1`.
 
-Training: once per horse per farm day, costs 2 grain feed + 2 water and 25 energy. Adds 1 selected attribute up to 95. Complete daily horse rations restore 35 energy and add 4 condition at day advance. Missed rations restore 5 energy and subtract 6 condition. Energy max 100; condition range 20–100. Practice calculations are free previews and do not consume energy or award anything.
+Speed sets desired pace; power affects acceleration/launch; stamina reduces reserve consumption. Starting energy and condition scale pace. Conserve/Rhythm/Push trade pace against reserve. Stamina below 22 incurs fatigue. Slipstream at 3.8–12 m saves reserve. Lane changes require a clear pocket; a runner within the same line can block forward progress. Outer turns cost additional distance. Skybreak is a single 4.5 s acceleration opportunity requiring 24 reserve to activate and draining reserve while active. Seeded NPC strategies choose save/attack timing and search for passing lanes. No language model determines the winner.
 
-## Competitive implementation next
-Run stats, training, race entry and settlement on the server. Snapshot immutable race entrants and stats; use a versioned engine with secure random seeds and an auditable seed-commit/reveal design. Keep the presentation a replay of the simulation rather than letting frame rate or client position decide results. Race IDs and settlement must prevent duplicate entry or rewards. Test long-distance stamina advantages, sprint power advantages, uncertainty, ties and abuse before setting fees or prizes.
+Finish timestamps interpolate within the fixed step. Rank is sorted by timestamp. Replay reconstructs the simulation from immutable starting attributes, distance, seed and input history. Replays and races do not consume farm resources or create rewards. Data is browser-local and editable by the player.
 
-Add a visible track, countdown, gallop animations, distance/energy indicators, finish photo and replay. Then add matchmaking, rival strategy and breeding/lifecycle limits. The browser-only alpha cannot enforce competitive integrity or support real-money outcomes.
+## Validation
+`tests/race-engine.test.mjs`: all distances, deterministic replay, reserve/health trade-offs, one burst, bounds and fixed-step equivalence.
+`tests/race-scene.test.mjs`: stadium construction, six independently loaded horse rigs and jockeys, all camera/phase updates, finite bounds.
+`tests/race-flow.test.mjs`: start/countdown commands, lane/pace/burst, pause, completion, result/history, exact replay and farm-save preservation.
+
+The cloud preview browser reports WebGL disabled. Model/scene/controller tests pass with a renderer stub; actual pixels, mobile frame rate and rider placement must be checked on a WebGL-capable device. Do not claim GPU visual QA was completed.
+
+## Remaining competitive work
+This is a complete local playable event against coded rivals, not live multiplayer or a money-prize service. Trusted server authority, accounts, matchmaking, anti-tampering, secure race seeds, audited settlement and real prizes are separate future work. No entry fee or payout is implemented.

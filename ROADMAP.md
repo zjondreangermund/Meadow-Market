@@ -24,6 +24,6 @@
 - [x] Visible work duration and task props.
 - [x] Maize stalk/leaf/cob art and building facade detail.
 - [x] Per-horse stats, daily training, care recovery and local race calculator.
-- [ ] Animated racetrack, galloping presentation, replay and race history.
+- [x] Skyline Cup: 3D track, six rigged racehorses/jockeys, tactical lanes/pace/burst, Director cameras, replay and local history. GPU visual QA still required.
 - [ ] Trusted server simulation, tamper resistance and multiplayer matchmaking.
 - [ ] Photorealistic art direction / final bespoke farmer and animals.
