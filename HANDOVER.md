@@ -60,3 +60,14 @@ The race adds pre-race Closer/Slipstream/Breakaway plans; seeded firm/soft track
 `index.html` is now a farming-art welcome page, `farm.html` retains the full previous farm and reads the unchanged `meadow-cycle-v2` save. The generated cover illustration is `farm-welcome.webp` and is labelled cover art, not a screenshot. The outer private-site ChatGPT sign-in screen is platform-controlled and has no exposed image-customization setting; its audience/authentication was preserved. Do not claim that outer gate was customized.
 
 Cloud WebGL remains unavailable. Welcome page visually inspected; actual animated skin positions and race flow are tested. GPU screenshots, final appearance and real phone frame rate are still unverified. Railway does not change client-side asset/rendering quality; no infrastructure migration was performed.
+
+## Rider and steering rebuild — 2 November 2026
+User screenshot showed the continuing visual problems and horses moving across the grass. A real terrain defect was present: the ellipse's Y varied below the surrounding ground. The circuit now stays at Y=0.2, above the terrain; a whole-lap/all-lanes assertion verifies clearance.
+
+`jockey.js` now loads the existing licensed Quaternius humanoid GLB and uses its face, hands, boots, clothing topology and skin skeleton. The earlier capsule/sphere-body rider has been removed. Riding is posed with two-bone arm/leg IK, independent foot placement, forward spine lean, head looking into turns, inside-hand rein shortening and outside-hand release. Reins are dynamic curves from actual wrists to the horse head. The original straw hat is hidden and a helmet/goggles follow the head bone. This is an adapted stylised CC0 human asset, not a new bespoke photorealistic jockey.
+
+`race-motion.js` derives heading from forward PLUS lateral travel, applies controlled banking and sends steering cues to the jockey and neck/head bones. Lane velocity accelerates/decelerates rather than snapping laterally. Rules are `skyline-3`. Actual travelled velocity is recorded separately from desired speed; the HUD and gallop rate use actual motion. The horse's stride cadence is calibrated to distance travelled, including slower replays and blocked movement. Seated rider bounce continues to follow the Body bone.
+
+Track presentation uses full-resolution High mode by default, physical surface materials, a gradient sky and rolling mountain meshes instead of pyramid silhouettes. Mobile HUD is compact, gauges are horizontal, and Field toggles the full order. Director avoids the very wide broadcast shot; it is still manually available.
+
+Relevant tests: jockey.test.mjs, race-motion.test.mjs, race-scene.test.mjs (now checks animated human rigs and whole-lap track clearance), race-engine.test.mjs, race-flow.test.mjs. Cloud GPU/WebGL rendering is still unavailable; do not claim that the finished rendered visuals or Android frame rate have been verified.
