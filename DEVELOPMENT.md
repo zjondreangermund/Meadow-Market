@@ -35,3 +35,6 @@ Server-authoritative accounts/inventory, real player listings and atomic settlem
 - Model licences and origins: dist/models/CREDITS.txt. Three.js MIT licence: dist/vendor/THREE-LICENSE.txt.
 - Asset parsing, skeleton independence, animation transitions and finite animated bounds: node tests/animal-assets.test.mjs.
 - Pointer-pan/pinch and scene/dialog handler checks passed in a stub-renderer test. Cloud WebGL remains unavailable, so visual device verification is incomplete.
+
+## Walk-in stable / farmer update
+The stable is now built by dist/stable.js, with an open central entrance/aisle, horse stalls, clickable gates, straw bedding and interior horse troughs. It replaces the original solid stable collider. Roof/front facade cut away while the player is inside. Horse spawn/wander targets are inside the stalls. Farmer appearance now includes shaped limbs, overalls, belt, face, hair, hand and boot details; it remains an original procedural stylised character, not a photorealistic imported person. Stable geometry/collision/cutaway checks: node tests/stable.test.mjs.

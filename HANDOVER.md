@@ -1,7 +1,7 @@
 # Continuation handover — 2 November 2026
 
 ## Source baseline
-This export contains the source recovered from the existing Sites source repository at commit `75b0c57ec8b92d197f0f9e112870d03c8f546b29`, plus handover documents. It is the latest published implementation from the original development chat, not an implementation of later requested stable/character changes.
+This export contains the source recovered from the existing Sites source repository at commit `75b0c57ec8b92d197f0f9e112870d03c8f546b29`, and subsequently updated here with the improved farmer and walk-in horse stables. The recovery commit records the original baseline; the current repository contains those later changes.
 
 Existing site URL: https://meadow-market-farm.zjondreangermund.chatgpt.site/
 Existing project ID: appgprj_6ae8ab655a68819199e0e3433bd64eae
@@ -24,8 +24,8 @@ A prior assistant described a polished male/female farmer, natural locomotion/in
 - Full economic data and provisional rations in DEVELOPMENT.md and economy.js.
 
 ## Important limitations
-- The current stable is a solid exterior building: NOT walk-in. Horses are outside. This must change.
-- Farmer is assembled geometry, not a polished animated character asset.
+- Updated after the export: stable now has an open entrance, navigable aisle, two horse stalls, gates and roof cutaway; horses are inside. See dist/stable.js.
+- Farmer has improved shaped body/limbs, facial features, hair, overalls, belt, hands and boots. It remains procedural stylised art, not a photorealistic character asset.
 - Models are stylised, NOT photorealistic/racing-quality final art.
 - No real user marketplace, login, secure server authority, database or payment integration.
 - Real-time daily simulation, animal lifecycle, breeding, racing and cash-backed surrender values are NOT implemented in the current 3D resource game. management.html has older independent experiments; do not confuse them with current features.
@@ -36,4 +36,4 @@ A prior assistant described a polished male/female farmer, natural locomotion/in
 Own original game inspired by CropBytes, not copied branding/art/code. Off-chain. Long-term goal: N$ withdrawals from genuinely funded player sales/rewards, user benefit plus business fees/subscription revenue. No fixed daily investment-return promises, no unbacked redeemable token issuance, no using protected refund funds for operations. Animal base-value protection, finite funded production contracts, breeding limits and lifecycle were discussed but amounts/rules remain proposals to model before cash launch. Current coins are test-only, nonwithdrawable.
 
 ## Next chat starting prompt
-“Continue Meadow Market from this repository. Read HANDOVER.md and ROADMAP.md. First improve the farmer's appearance and implement horse stables that the player can actually walk into, preserving touch gestures, instant action menus, task cards and the production cycle. Do not claim unfinished real-money or multiplayer features are live. Keep the existing Sites project for deployment.”
+“Continue Meadow Market from this repository. Read HANDOVER.md and ROADMAP.md. Continue refining the farmer and walk-in stables after device playtesting, preserving touch gestures, instant action menus, task cards and the production cycle. Do not claim unfinished real-money or multiplayer features are live. Keep the existing Sites project for deployment.”

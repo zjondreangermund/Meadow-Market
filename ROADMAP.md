@@ -1,9 +1,9 @@
 # Priority backlog
 
 ## Next user-requested work
-- [ ] Replace or substantially improve farmer model, clothing, proportions and locomotion; retain male/female choice.
-- [ ] Walk-in stables: real entrance/collision opening, navigable interior, horse stalls and visible horses inside. Camera/roof cutaway should keep interior usable.
-- [ ] Horse feeding/water points inside stalls integrated with existing resource logic.
+- [x] Improve the original farmer appearance, clothing, face and proportions; retain male/female choice. Imported realistic character art remains future work.
+- [x] Walk-in stable geometry, entrance/aisle collision, interior horses/stalls, gates and roof cutaway implemented. Device visual QA remains required.
+- [x] Interior horse food/water stations connected to existing ration logic.
 - [ ] Preserve immediate action menus, task illustrations, pan/pinch/rotate and saved progress.
 - [ ] More realistic-looking animal art, particularly horses suitable for eventual racing; verify model licences and mobile performance.
 

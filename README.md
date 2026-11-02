@@ -20,6 +20,7 @@ Node.js 22 or newer is recommended:
 ```sh
 node tests/economy.test.mjs
 node tests/animal-assets.test.mjs
+node tests/stable.test.mjs
 node --input-type=module --check < dist/farm.js
 ```
 
