@@ -1,9 +1,10 @@
 import * as T from './three.module.js';
+import {fitRig,matteMaterials} from './model-rig.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 const cache=new Map();
 export async function loadFarmer(variant){const file=variant==='lady'?'farmer-woman.glb':'farmer.glb';if(!cache.has(file))cache.set(file,new GLTFLoader().loadAsync('./models/'+file));return createFarmerRig(await cache.get(file));}
 import {clone} from './vendor/SkeletonUtils.js';
-export function createFarmerRig(asset){const root=new T.Group(),model=clone(asset.scene);root.add(model);const bounds=new T.Box3().setFromObject(model),scale=2.55/(bounds.max.y-bounds.min.y);model.scale.multiplyScalar(scale);model.position.y=-bounds.min.y*scale;
+export function createFarmerRig(asset){const root=new T.Group(),model=clone(asset.scene);root.add(model);fitRig(model,2.55);matteMaterials(model);
  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;o.material=(Array.isArray(o.material)?o.material:[o.material]).map(m=>{m=m.clone();m.metalness=0;m.roughness=.85;return m;});if(o.material.length===1)o.material=o.material[0];}});
  const mixer=new T.AnimationMixer(model),actions=new Map();for(const c of asset.animations){const name=c.name.split('|').pop().toLowerCase();if(['idle_neutral','walk','interact'].includes(name)){// Keep locomotion in place; world movement belongs to pathfinding.
  const clip=c.clone();clip.tracks=clip.tracks.filter(t=>!/^Root\.position$/.test(t.name));actions.set(name,mixer.clipAction(clip));}}

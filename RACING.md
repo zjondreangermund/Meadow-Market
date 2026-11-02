@@ -10,7 +10,7 @@ Enter through **Farm → Horses → Enter Meadow Park**, or open `dist/racing.ht
 - 400 m sprint, 800 m classic and 1600 m endurance. Desktop keys and mobile buttons. Pause/resume, tab-hide pause, retirement and WebGL failure messaging.
 
 ## Simulation contract
-`race-engine.js` is GPU-independent. Its `STEP` is 1/60 second; browser rendering advances an accumulator and never chooses a winner. Snapshot horse attributes and seed plus tick-indexed commands replay the same result. Rules version: `skyline-1`.
+`race-engine.js` is GPU-independent. Its `STEP` is 1/60 second; browser rendering advances an accumulator and never chooses a winner. Snapshot horse attributes and seed plus tick-indexed commands replay the same result. Rules version: `skyline-2`.
 
 Speed sets desired pace; power affects acceleration/launch; stamina reduces reserve consumption. Starting energy and condition scale pace. Conserve/Rhythm/Push trade pace against reserve. Stamina below 22 incurs fatigue. Slipstream at 3.8–12 m saves reserve. Lane changes require a clear pocket; a runner within the same line can block forward progress. Outer turns cost additional distance. Skybreak is a single 4.5 s acceleration opportunity requiring 24 reserve to activate and draining reserve while active. Seeded NPC strategies choose save/attack timing and search for passing lanes. No language model determines the winner.
 
@@ -25,3 +25,8 @@ The cloud preview browser reports WebGL disabled. Model/scene/controller tests p
 
 ## Remaining competitive work
 This is a complete local playable event against coded rivals, not live multiplayer or a money-prize service. Trusted server authority, accounts, matchmaking, anti-tampering, secure race seeds, audited settlement and real prizes are separate future work. No entry fee or payout is implemented.
+
+## Strategy and visual repair
+Choose Closer (+4.5% late pace above 25 reserve), Breakaway (+5.5% first 150m pace with 18% higher reserve use there), or Slipstream (stronger reserve saving and small drafting pace bonus). The race seed fixes firm/soft turf and wind before entry. Soft going benefits power and increases drain; drafting reduces headwind exposure. Resolve grows while saving/drafting and sets Skybreak multiplier from 1.10 to 1.22, then is consumed. Saved session replays include course/plan options.
+
+Race meshes are fitted only after bone matrices are synchronized. Horses use weighted Loop subdivision and smooth non-emissive materials. Riders are smooth geometry and follow body animation, with staggered horse clip phases. Full models must load before entry; there are no block-horse stand-ins. The High/Performance switch adjusts resolution and shadows; the simulation is unchanged. `tests/farmer-rig.test.mjs`, `animal-assets.test.mjs` and `race-scene.test.mjs` now inspect actual posed skinned vertices to prevent recurrence of the centimetre-sized character bug.

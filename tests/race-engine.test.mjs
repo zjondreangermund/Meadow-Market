@@ -9,3 +9,6 @@ const race=createRace(horse,800,9);for(let i=0;i<1000;i++)stepRace(race,{pace:'p
 // Mid-race replay must reproduce exact state, with no frame-rate dependency.
 const r1=createRace(horse,800,33),r2=createRace(horse,800,33);for(let i=0;i<2000;i++)stepRace(r1,{pace:'cruise',lane:1});for(let batch=0;batch<100;batch++)for(let i=0;i<20;i++)stepRace(r2,{pace:'cruise',lane:1});assert.deepEqual(r1,r2);
 console.log('PASS: all distances, seeded replay, stamina trade-offs, health, one burst, bounded lanes and frame-independent stepping.');
+
+for(const plan of ['closer','front','stalker']){const r=createRace(horse,800,77,{plan,track:'soft'});assert.equal(r.runners[0].plan,plan);assert.equal(r.track,'soft');for(let i=0;i<1000;i++)stepRace(r,{pace:'save'});assert.ok(r.runners[0].resolve>30);assert.ok(r.runners[0].reserve>80);stepRace(r,{burst:true});assert.equal(r.runners[0].resolve,0);assert.ok(r.runners[0].burstStrength>1.13);}
+console.log('PASS: race plans, soft turf and Resolve-driven burst strength.');

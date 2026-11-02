@@ -1,0 +1,7 @@
+import * as T from './three.module.js';
+// Cloned skeletons have stale bone matrices until their full hierarchy is updated.
+// Measuring before this step can shrink a metre-scale character to centimetres.
+export function syncRig(model){model.updateMatrixWorld(true);model.traverse(o=>{if(o.isSkinnedMesh){o.skeleton.update();o.computeBoundingBox();o.computeBoundingSphere();}});}
+export function fitRig(model,height){syncRig(model);const bounds=new T.Box3().setFromObject(model);const measured=bounds.max.y-bounds.min.y;if(!Number.isFinite(measured)||measured<.001)throw Error('Invalid animated model bounds.');const scale=height/measured;model.scale.multiplyScalar(scale);model.position.y-=bounds.min.y*scale;syncRig(model);return model;}
+export function skinBounds(model,stride=8){syncRig(model);const bounds=new T.Box3(),v=new T.Vector3();model.traverse(o=>{if(o.isSkinnedMesh)for(let i=0;i<o.geometry.attributes.position.count;i+=stride)bounds.expandByPoint(o.getVertexPosition(i,v).applyMatrix4(o.matrixWorld));});return bounds;}
+export function matteMaterials(model,{roughness=.78,smooth=false}={}){model.traverse(o=>{if(!o.isMesh)return;const list=(Array.isArray(o.material)?o.material:[o.material]).map(m=>new T.MeshStandardMaterial({name:m.name,color:m.color?.clone()||new T.Color('#c38b80'),map:m.map||null,roughness,metalness:0,emissive:0,emissiveIntensity:0,opacity:1,transparent:false,depthWrite:true,side:T.DoubleSide,flatShading:false}));o.material=list.length===1?list[0]:list;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;});return model;}
