@@ -1,0 +1,127 @@
+import * as T from './three.module.js';
+
+// Material-only upgrade. The meshes stay skinned/animated and no existing save is rewritten.
+// Each animal has a deterministic visual identity instead of a random coat on each reload.
+export const COATS = {
+ horse:[
+  {id:'bay-star',base:'#5a3227',accent:'#f4ead9',mane:'#201714',pattern:'star'},
+  {id:'chestnut-stripe',base:'#a65a35',accent:'#f8e8d2',mane:'#74452c',pattern:'stripe'},
+  {id:'jet-black',base:'#262322',accent:'#f8eadb',mane:'#141313',pattern:'solid'},
+  {id:'buckskin',base:'#c3a075',accent:'#554438',mane:'#302a27',pattern:'points'},
+  {id:'piebald',base:'#332e2b',accent:'#f4ede2',mane:'#292322',pattern:'patches'},
+  {id:'dapple-grey',base:'#929795',accent:'#d7d9d4',mane:'#555a59',pattern:'dapples'},
+  {id:'liver-chestnut',base:'#673b31',accent:'#eee0ca',mane:'#2f2420',pattern:'star'},
+  {id:'dark-bay',base:'#48332d',accent:'#eee0ca',mane:'#1a1817',pattern:'stripe'}
+ ],
+ cow:[
+  {id:'holstein',base:'#f4f0e6',accent:'#282a29',mane:'#e8dfd1',pattern:'patches'},
+  {id:'hereford',base:'#914d35',accent:'#f1e8d6',mane:'#e8dfd1',pattern:'face'},
+  {id:'brahman-grey',base:'#727b75',accent:'#b4b8ae',mane:'#5b625d',pattern:'dapples'},
+  {id:'cream',base:'#e1c8a0',accent:'#f6e9d4',mane:'#d5ba96',pattern:'star'}
+ ],
+ pig:[
+  {id:'pink-patches',base:'#d89e95',accent:'#795c56',mane:'#b5817a',pattern:'patches'},
+  {id:'ginger',base:'#ae7659',accent:'#f1c5a8',mane:'#8d634d',pattern:'freckles'},
+  {id:'belted',base:'#302f31',accent:'#f7ebdf',mane:'#282626',pattern:'belt'},
+  {id:'spotted',base:'#d6b9a4',accent:'#383337',mane:'#aa9786',pattern:'patches'}
+ ],
+ chicken:[
+  {id:'buff',base:'#d5a759',accent:'#f6dfaa',mane:'#9b6a36',pattern:'feathers'},
+  {id:'barred',base:'#777875',accent:'#f0ede5',mane:'#55534f',pattern:'bars'},
+  {id:'speckled',base:'#b39b7d',accent:'#4c3d30',mane:'#8a6e58',pattern:'freckles'},
+  {id:'red-hen',base:'#95452f',accent:'#e5ab6a',mane:'#643326',pattern:'feathers'}
+ ]
+};
+export function visualSeed(value){const s=String(value);let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+export function coatFor(type,key,slot){
+ const choices=COATS[type]||COATS.horse;
+ const seed=visualSeed(type+':'+String(key));
+ const chosen=choices[(Number.isInteger(slot)&&slot>=0?slot:seed)%choices.length];
+ return {...chosen,seed,key:String(key),type};
+}
+const textureCache=new Map();
+function random(seed){let v=seed>>>0;return ()=>((v=(Math.imul(v,1664525)+1013904223)>>>0)/4294967296);}
+function patch(ctx,r,x,y,w,h,color){
+ ctx.fillStyle=color;ctx.beginPath();
+ const n=10;for(let i=0;i<n;i++){const a=i/n*Math.PI*2,shrink=.72+r()*.5;const px=x+Math.cos(a)*w*shrink,py=y+Math.sin(a)*h*shrink;if(!i)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+ ctx.closePath();ctx.fill();
+}
+function paint(type,key,slot){
+ const coat=coatFor(type,key,slot),cacheKey=type+':'+coat.id+':'+coat.seed;
+ if(textureCache.has(cacheKey))return textureCache.get(cacheKey);
+ if(typeof document==='undefined'||typeof document.createElement!=='function')return null;
+ let canvas,ctx;try{canvas=document.createElement('canvas');canvas.width=canvas.height=512;ctx=canvas.getContext?.('2d');}catch{return null;}
+ if(!ctx||!['fillRect','beginPath','lineTo','ellipse','fill'].every(k=>typeof ctx[k]==='function'))return null;
+ const r=random(coat.seed),size=512;
+ ctx.fillStyle=coat.base;ctx.fillRect(0,0,size,size);
+ // Fine hide/fibre noise creates visible material texture without adding mesh cost.
+ for(let i=0;i<6500;i++){
+  const x=r()*size,y=r()*size,w=.4+r()*2.2;
+  ctx.fillStyle=r()>.5?'rgba(255,244,219,.065)':'rgba(14,12,11,.08)';
+  ctx.fillRect(x,y,w,.7+r()*2.5);
+ }
+ if(coat.pattern==='patches'||coat.pattern==='face'){
+  const count=type==='pig'?10:type==='cow'?12:8;
+  for(let i=0;i<count;i++)patch(ctx,r,30+r()*455,25+r()*455,17+r()*65,15+r()*70,coat.accent);
+ }
+ if(coat.pattern==='star'){
+  patch(ctx,r,245,120,16,24,coat.accent);patch(ctx,r,410,320,9,17,coat.accent);
+ }
+ if(coat.pattern==='stripe'){
+  patch(ctx,r,260,115,12,105,coat.accent);patch(ctx,r,410,365,12,54,coat.accent);
+ }
+ if(coat.pattern==='points'){
+  ctx.fillStyle=coat.accent;ctx.fillRect(0,430,512,82);
+ }
+ if(coat.pattern==='belt'){
+  ctx.fillStyle=coat.accent;ctx.fillRect(180,0,115,512);
+ }
+ if(coat.pattern==='dapples'){
+  for(let i=0;i<230;i++){
+   const x=r()*size,y=r()*size,rad=3+r()*11;ctx.globalAlpha=.12+r()*.28;ctx.fillStyle=coat.accent;ctx.beginPath();ctx.ellipse(x,y,rad,rad*.7,0,0,Math.PI*2);ctx.fill();
+  }ctx.globalAlpha=1;
+ }
+ if(coat.pattern==='freckles'||coat.pattern==='feathers'){
+  const count=coat.pattern==='feathers'?160:120;
+  for(let i=0;i<count;i++)patch(ctx,r,r()*size,r()*size,1+r()*6,1+r()*10,coat.accent);
+ }
+ if(coat.pattern==='bars'){
+  ctx.fillStyle=coat.accent;for(let x=-512;x<1024;x+=55){ctx.save();ctx.translate(x,0);ctx.rotate(-.22);ctx.fillRect(0,0,17,750);ctx.restore();}
+ }
+ const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=4;tex.needsUpdate=true;
+ textureCache.set(cacheKey,tex);return tex;
+}
+function isSeparatePart(name){return /eye|pupil|teeth|nostril|hoof|horn|saddle|rein|tack|metal|leather|collar|mouth|tongue|inner_ear/i.test(name);}
+function isMane(name){return /mane|hair|tail|bristle/i.test(name);}
+export function applyAnimalCoat(model,type,key,slot){
+ const coat=coatFor(type,key,slot),texture=paint(type,key,slot);
+ model.traverse(o=>{
+  if(!o.isMesh)return;
+  const original=Array.isArray(o.material)?o.material:[o.material];
+  const converted=original.map(m=>{
+   const next=m.clone(),name=(o.name||'')+' '+(m.name||'');
+   if(isSeparatePart(name))return next;
+   next.metalness=0;next.roughness=type==='horse'?.72:type==='pig'?.91:.84;next.flatShading=false;
+   if(isMane(name)){next.map=null;next.color.set(coat.mane);}
+   else if(texture&&o.geometry?.attributes?.uv){next.map=texture;next.color.set('#ffffff');}
+   else next.color.set(coat.base);
+   next.transparent=false;next.opacity=1;next.depthWrite=true;next.needsUpdate=true;
+   return next;
+  });
+  o.material=Array.isArray(o.material)?converted:converted[0];
+ });
+ model.userData.coatId=coat.id;model.userData.appearanceSeed=coat.seed;
+ return coat;
+}
+export function applyChickenFeathers(group,key,slot,baseColor){
+ const coat=coatFor('chicken',key,slot),texture=paint('chicken',key,slot),target=new T.Color(baseColor);
+ group.traverse(o=>{
+  if(!o.isMesh||!o.material?.color)return;
+  const m=o.material,color=m.color;
+  if(Math.abs(color.r-target.r)+Math.abs(color.g-target.g)+Math.abs(color.b-target.b)>.03)return;
+  const fresh=m.clone();fresh.color.set(texture&&o.geometry?.attributes?.uv?'#ffffff':coat.base);
+  if(texture&&o.geometry?.attributes?.uv)fresh.map=texture;
+  fresh.roughness=.95;fresh.metalness=0;o.material=fresh;
+ });
+ group.userData.coatId=coat.id;group.userData.appearanceSeed=coat.seed;return coat;
+}
