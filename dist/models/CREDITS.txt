@@ -32,3 +32,26 @@ Source GLB distribution: https://github.com/Hidencod/tge-assets (catalog links t
 Lantern: Microsoft / sbtron (2017), CC0 1.0; Khronos glTF Sample Assets, Models/Lantern.
 https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Lantern
 Lantern embedded PBR maps reduced from 2048 to 1024 pixels for mobile; geometry unchanged. No assets were purchased. Kenney props are authored stylized low-poly assets, not photorealistic HD replacements.
+
+
+High-detail farm animal geometry (v5):
+3DAssets.dev — Farm and Working Animals HD, published by 3D Assets.
+https://3dassets.dev/packs/farm-and-working-animals-hd
+License: CC0 1.0 Universal; original meshes and textures, AI-assisted authoring disclosed by publisher.
+https://creativecommons.org/publicdomain/zero/1.0/
+Individual immutable CDN assets, asynchronously loaded with CORS; not bundled with this GitHub repository:
+ - riding horse: https://cdn.3dassets.dev/assets/29169/v1/model.glb
+ - Holstein cow: https://cdn.3dassets.dev/assets/29184/v1/model.glb
+ - Jersey cow: https://cdn.3dassets.dev/assets/29185/v1/model.glb
+ - pig: https://cdn.3dassets.dev/assets/29194/v1/model.glb
+ - hen: https://cdn.3dassets.dev/assets/29197/v1/model.glb
+ - white hen: https://cdn.3dassets.dev/assets/29198/v1/model.glb
+The vendor's detailed GLBs are STATIC. The game re-skins horse/cow/pig sculpt meshes onto
+its own existing animated skeletons using bind-pose weight transfer. It creates a
+lightweight original procedural skeleton for hens (head, legs, wings and tail).
+Animated poses and accurate rig placement require GPU/Android device QA.
+When a CDN request fails, original rigged models remain in place rather than
+blocking the farm or race. The on-screen version label reports fallback status.
+Humans remain their original Quaternius skinned identity, with improved subdivision
+and true UV-mapped workwear/jockey fabric. They are NOT newly authored photorealistic
+human GLBs. The original farmer, jockey and race interactions remain unchanged.
