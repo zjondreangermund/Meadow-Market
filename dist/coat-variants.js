@@ -32,6 +32,13 @@ export const COATS = {
   {id:'red-hen',base:'#95452f',accent:'#e5ab6a',mane:'#643326',pattern:'feathers'}
  ]
 };
+// Existing save files receive visible default coats without resetting their stats.
+export const HORSE_STARTER_COATS=Object.freeze({dawn:'piebald',copper:'buckskin'});
+export function horseCoatId(horse){
+ const raw=horse?.coatId;
+ if(COATS.horse.some(v=>v.id===raw))return raw;
+ return HORSE_STARTER_COATS[horse?.id]||COATS.horse[0].id;
+}
 export function visualSeed(value){const s=String(value);let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 export function coatFor(type,key,slot){
  const choices=COATS[type]||COATS.horse;
