@@ -1,0 +1,25 @@
+name: Farm 3D visual and gameplay regression
+on:
+  pull_request:
+  push:
+    branches: [main, design/pbr-character-animal-concepts]
+jobs:
+  visual-and-gameplay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          for f in dist/{coat-variants,garment-materials,animal-assets,farmer-rig,jockey,farm,race-scene,race}.js; do
+            node --check "$f"
+          done
+      - name: Validate full farm and racing regression suite
+        run: |
+          set -e
+          for f in tests/*.test.mjs; do
+            echo "RUN $f"
+            node "$f"
+          done

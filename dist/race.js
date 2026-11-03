@@ -2,7 +2,7 @@ import {horsesFor} from './horses.js';
 import {fresh} from './economy.js';
 import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js';
 import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=world8';
-import {createRaceScene,SILKS} from './race-scene.js?v=world8';
+import {createRaceScene,SILKS} from './race-scene.js?v=visual3';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
@@ -18,8 +18,8 @@ function readHistory(){try{const h=JSON.parse(localStorage.getItem('meadow-race-
 function timeLabel(t){if(!Number.isFinite(t))return '—';const min=Math.floor(t/60),s=(t%60).toFixed(2).padStart(5,'0');return `${String(min).padStart(2,'0')}:${s}`;}
 function renderProfile(){
  $('#horse-picker').innerHTML=horses.map(h=>`<button data-horse="${escape(h.id)}" class="${h.id===selected.id?'selected':''}">${escape(h.name)}<small>${h.id==='dawn'?'ENDURANCE SPECIALIST':'EXPLOSIVE FINISHER'}</small></button>`).join('');
- $('#profile').innerHTML=`<div class="stats">${['speed','stamina','power'].map(k=>`<label>${k.toUpperCase()}<b>${selected[k]}</b><progress value="${selected[k]}" max="100"></progress></label>`).join('')}</div><div class="condition"><span>Energy <b>${selected.energy}%</b></span><span>Condition <b>${selected.condition}%</b></span></div>`;
- for(const b of document.querySelectorAll('[data-horse]'))b.onclick=()=>{selected=horses.find(h=>h.id===b.dataset.horse);renderProfile();};
+ $('#profile').innerHTML=`<div class="stats">${['speed','stamina','power'].map(k=>`<label>${k.toUpperCase()}<b>${selected[k]}</b><progress value="${selected[k]}" max="100"></progress></label>`).join('')}</div><p class="condition">3D coat identity: ${selected.id==='dawn'?'Bay star':'Chestnut stripe'} · stable & race track</p><div class="condition"><span>Energy <b>${selected.energy}%</b></span><span>Condition <b>${selected.condition}%</b></span></div>`;
+ for(const b of document.querySelectorAll('[data-horse]'))b.onclick=()=>{selected=horses.find(h=>h.id===b.dataset.horse);world?.setHorseProfile?.(selected);renderProfile();};
 }
 renderProfile();
 $('#conditions').textContent=(track==='soft'?'SOFT TURF · POWER MATTERS':'FIRM TURF · FAST GOING')+' · '+(eventSeed%9>4?'STRONG':'LIGHT')+' CROSSWIND';
@@ -112,4 +112,4 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min(.1,(now-last)
  }
  if(now>announcementUntil)$('#callout').classList.remove('visible');
 }
-if(world){world.ready.then(ok=>{if(ok)world.setJockey?.(jockeyById(jockeyId));$('#start').disabled=!ok;$('#start').textContent=ok?'Begin race day  ↗':'Horse models unavailable — reload';$('#load-note').textContent=ok?'Parade ring → riders up → starting gates → race → run-through':'The full horse models could not load. Reload to retry; the race will not substitute block horses.';});requestAnimationFrame(frame);}
+if(world){world.ready.then(ok=>{if(ok){world.setJockey?.(jockeyById(jockeyId));world.setHorseProfile?.(selected);}$('#start').disabled=!ok;$('#start').textContent=ok?'Begin race day  ↗':'Horse models unavailable — reload';$('#load-note').textContent=ok?'Parade ring → riders up → starting gates → race → run-through':'The full horse models could not load. Reload to retry; the race will not substitute block horses.';});requestAnimationFrame(frame);}
