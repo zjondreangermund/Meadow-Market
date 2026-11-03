@@ -4,8 +4,8 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat} from './coat-variants.js?v=visual6';
-import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual6';
+import {applyAnimalCoat} from './coat-variants.js?v=visual6compat';
+import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual6compat';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
 function withDeadline(promise){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Animated model loading timed out')),15000);})]).finally(()=>clearTimeout(timer));}
@@ -42,7 +42,7 @@ export async function upgradeAnimals(animals,onStatus){
     // connection the original rig remains playable, never a static substitute.
     try{
      const detail=await enhanceAnimalRig(model,type,{slot:typeof a.appearanceSlot==='number'?a.appearanceSlot:0});
-     a.hd=detail.upgraded;a.hdError=detail.upgraded?null:detail.reason;
+     a.hd=detail.upgraded;a.nativeRig=!!detail.nativeRig;a.hdError=detail.upgraded||detail.nativeRig?null:detail.reason;
     }catch(e){a.hd=false;a.hdError=e.message;console.warn('HD '+type+' unavailable; using animated rig:',e.message);}
     applyAnimalCoat(model,type,a.g.userData.appearanceKey||a.g.userData.name||type,a.appearanceSlot);
     model.traverse(o=>{if(o.isMesh){

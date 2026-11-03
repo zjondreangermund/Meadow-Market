@@ -7,8 +7,8 @@ import {racingPose} from './race-motion.js';
 import {safeRaceCamera,cameraClear} from './race-camera.js?v=world8';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=visual6';
-import {enhanceAnimalRig} from './hd-animal-pack.js?v=visual6';
+import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=visual6compat';
+import {enhanceAnimalRig} from './hd-animal-pack.js?v=visual6compat';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobile=innerWidth<750;
@@ -91,12 +91,12 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
    applyAnimalCoat(model,'horse','race-'+i,[4,3,5,2,0,1][i]);const ropeGeo=new T.BufferGeometry();ropeGeo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(33*3),3));r.lead=new T.Line(ropeGeo,new T.LineBasicMaterial({color:'#e7cb94'}));r.lead.frustumCulled=false;scene.add(r.lead);const bridleGeo=new T.BufferGeometry();bridleGeo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(33*3),3));r.bridle=new T.Line(bridleGeo,new T.LineBasicMaterial({color:'#30241d'}));r.bridle.frustumCulled=false;r.root.add(r.bridle);r.root.add(model);r.fallback.g.visible=false;r.model=model;r.mixer=new T.AnimationMixer(model);const clip=asset.animations.find(a=>/gallop$/i.test(a.name))||asset.animations.find(a=>/walk$/i.test(a.name));const idle=asset.animations.find(a=>/idle$/i.test(a.name));const walk=asset.animations.find(a=>/walk$/i.test(a.name));if(walk)r.walk=r.mixer.clipAction(walk);if(clip)r.action=r.mixer.clipAction(clip);if(idle)r.idle=r.mixer.clipAction(idle).play();
    }
    await Promise.all(racers.map(r=>r.jockey.userData.ready));
-   // Upgrade all six genuinely skinned racehorses together, with the old
-   // Quaternius rig as a safe fallback if HD downloads are unavailable.
+   // Apply the shared visual policy: all six horses retain the original
+   // authored animated skin while the compatibility workaround is active.
    await Promise.all(racers.map(async(r,i)=>{
     try{
      const result=await enhanceAnimalRig(r.model,'horse',{slot:i});
-     r.hd=result.upgraded;
+     r.hd=result.upgraded;r.nativeRig=!!result.nativeRig;
      if(r.hd)applyAnimalCoat(r.model,'horse','race-'+i,[4,3,5,2,0,1][i]);
     }catch(e){r.hd=false;console.warn('HD racehorse fallback',i,e.message);}
    }));
