@@ -21,7 +21,7 @@ export function createJockey(color,number=1){
  root.userData.update=()=>{};root.userData.scarf=true;
  const ready=(assetPromise??=new GLTFLoader().loadAsync('./models/farmer.glb')).then(asset=>{
   const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.78});root.add(model);root.userData.model=model;
-  model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants/.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet/.test(o.name))m.color.set('#252329');else if(/Farmer_Body/.test(o.name)&&m.name!=='Skin')m.color.set(m.name==='Beige'?'#ece3d0':color);}});
+  model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants/.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet/.test(o.name))m.color.set('#252329');else if(/Farmer_Body/.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige')m.userData.teamSilk=true;}}});
   const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
   let modelBase;
   const saved=Object.values(bones).map(b=>({b,q:b.quaternion.clone(),p:b.position.clone()}));
@@ -59,6 +59,7 @@ export function createJockey(color,number=1){
    for(let j=0;j<2;j++){const end=bit.clone();end.x+=(j?1:-1)*.14;const start=hands[j],mid=start.clone().lerp(end,.5);mid.y-=.10+(j*2-1)*steer*.035;const c=new T.QuadraticBezierCurve3(start,mid,end),p=reins[j].geometry.attributes.position;for(let k=0;k<25;k++){const v=c.getPoint(k/24);p.setXYZ(k,v.x,v.y,v.z);}p.needsUpdate=true;}
    model.updateMatrixWorld(true);
   };
+  root.userData.setSilks=shade=>{clothMat.color.set(shade);model.traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m.userData.teamSilk)m.color.set(shade);});};
   root.userData.update(0,0,{});const b=skinBounds(model);if(b.max.y-b.min.y<1)throw Error('Invalid posed jockey bounds.');return true;
  });
  root.userData.ready=ready;return root;

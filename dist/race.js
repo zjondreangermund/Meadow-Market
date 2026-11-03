@@ -1,13 +1,19 @@
 import {horsesFor} from './horses.js';
-import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=motion4';
-import {createRaceScene,SILKS} from './race-scene.js?v=motion4';
+import {fresh} from './economy.js';
+import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js';
+import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=recruit5';
+import {createRaceScene,SILKS} from './race-scene.js?v=recruit5';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save={version:2};
+let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
 const horses=horsesFor(save);let selected=horses.find(h=>h.id===new URLSearchParams(location.search).get('horse'))||horses[0],metres=800,plan='stalker';const eventSeed=crypto.getRandomValues(new Uint32Array(1))[0];const track=eventSeed%3===0?'soft':'firm';
-let phase='lobby',race=null,command={pace:'cruise',lane:0,burst:false},inputs=[],currentRun=null,lastRun=null,paused=false,accumulator=0,countdown=0,finishWait=0,announcementUntil=0,uiClock=0,lastPosition=1,finalCalled=false,slowmo=0,replayAt=0,replaySpeed=1,camIndex=0;
+let jockeyId='stable',bookingDone=false;
+let phase='lobby',race=null,command={pace:'cruise',lane:0,burst:false},inputs=[],currentRun=null,lastRun=null,paused=false,accumulator=0,countdown=0,finishWait=0,announcementUntil=0,uiClock=0,lastPosition=1,finalCalled=false,slowmo=0,replayAt=0,replaySpeed=1,camIndex=1;
 let soundEnabled=false,audio=null,noise=null,lastHoof=0;
 const cams=['Director','Chase','Rail','Broadcast'];
+function latestFarm(){try{const s=JSON.parse(localStorage.getItem('meadow-cycle-v2'));if(s?.version===2)return s;}catch{}return save;}
+function updateFarm(action){const s=latestFarm();const result=action(s);localStorage.setItem('meadow-cycle-v2',JSON.stringify(s));save=s;return result;}
+function renderJockeys(){const live=latestFarm(),roster=rosterFor(live),selectedJockey=jockeyById(jockeyId);$('#jockey-coins').textContent='◉ '+live.coins+' farm coins';$('#jockey-roster').innerHTML=JOCKEYS.map(j=>{const rides=roster[j.id]?.remaining||0,available=availableJockey(live,j.id);return `<article class="jockey-card ${j.id===jockeyId?'selected':''}" style="--silks:${j.color}"><div class="jockey-emblem">${j.name.split(' ').map(n=>n[0]).join('')}</div><div class="jockey-copy"><b>${j.name}</b><small>${j.title}</small><div class="jockey-skills">${[['Line',j.line],['Care',j.care],['Finish',j.finish]].map(([name,value])=>`<label>${name}<meter max="100" value="${value}"></meter></label>`).join('')}</div><p>${j.id==='stable'?'Always available · no fee':rides?rides+' starts left':j.price+' farm coins · 3 starts'}</p><button data-jockey="${j.id}" ${!available?'disabled':''}>${j.id===jockeyId?'Selected':'Choose rider'}</button>${j.id!=='stable'?`<button data-hire="${j.id}" ${rides?'disabled':''}>${rides?'Under contract':'Hire · '+j.price+' ◉'}</button>`:''}</div></article>`;}).join('');$('#jockey-summary').textContent=selectedJockey.name+' · '+selectedJockey.title;for(const b of document.querySelectorAll('[data-jockey]'))b.onclick=()=>{jockeyId=b.dataset.jockey;world?.setJockey?.(jockeyById(jockeyId));renderJockeys();};for(const b of document.querySelectorAll('[data-hire]'))b.onclick=()=>{try{updateFarm(s=>hireJockey(s,b.dataset.hire));jockeyId=b.dataset.hire;world?.setJockey?.(jockeyById(jockeyId));$('#jockey-message').textContent='Contract signed: '+jockeyById(jockeyId).name+' for 3 starts.';renderJockeys();}catch(e){$('#jockey-message').textContent=e.message;}};}
 function readHistory(){try{const h=JSON.parse(localStorage.getItem('meadow-race-history-v1'));return Array.isArray(h)?h.slice(0,10):[];}catch{return [];}}
 function timeLabel(t){if(!Number.isFinite(t))return '—';const min=Math.floor(t/60),s=(t%60).toFixed(2).padStart(5,'0');return `${String(min).padStart(2,'0')}:${s}`;}
 function renderProfile(){
@@ -23,12 +29,14 @@ function historyUI(){const history=readHistory();$('#history').innerHTML=history
 $('#history-toggle').onclick=()=>{show('#history',$('#history').hidden);historyUI();};
 let world;
 try{world=createRaceScene($('#world'));}catch(e){show('#error',true);$('#error').innerHTML='<b>The stadium needs WebGL.</b><br>Open this page in a browser with hardware graphics enabled, or return to the <a href="./farm.html">farm</a>.';console.error(e);}
+renderJockeys();
 function announce(text,seconds=2.5){$('#callout-text').textContent=text;$('#callout').classList.add('visible');announcementUntil=performance.now()+seconds*1000;}
 function tone(hz,duration=.08,volume=.04,type='sine'){if(!soundEnabled||!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(hz,audio.currentTime);g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}
 function activateAudio(){if(audio){audio.resume();return;}const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;try{audio=new AC();const buf=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),data=buf.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1);const src=audio.createBufferSource();src.buffer=buf;src.loop=true;const filter=audio.createBiquadFilter();filter.type='bandpass';filter.frequency.value=650;const gain=audio.createGain();gain.gain.value=soundEnabled?.028:0;src.connect(filter);filter.connect(gain);gain.connect(audio.destination);src.start();noise=gain;}catch{soundEnabled=false;}}
 $('#sound').onclick=()=>{soundEnabled=!soundEnabled;activateAudio();$('#sound').textContent=soundEnabled?'Sound on':'Sound off';$('#sound').setAttribute('aria-pressed',String(soundEnabled));if(noise)noise.gain.value=soundEnabled?.028:0;};
 $('#quality').onclick=()=>{const next=$('#quality').textContent.includes('High')?'Performance':'High';$('#quality').textContent='Visuals: '+next;world?.quality?.(next);};
 $('#field').onclick=()=>{const compact=$('#leaderboard').classList.toggle('compact');$('#field').textContent=compact?'Field +':'Field −';};
+$('#zoom-in').onclick=()=>world?.zoom?.(-.15);$('#zoom-out').onclick=()=>world?.zoom?.(.15);
 $('#camera').onclick=()=>{camIndex=(camIndex+1)%cams.length;world?.cameraMode(cams[camIndex]);$('#camera').textContent='Camera: '+cams[camIndex];};
 function setPace(pace){if(phase!=='race'&&phase!=='countdown')return;command.pace=pace;for(const b of document.querySelectorAll('[data-pace]'))b.classList.toggle('selected',b.dataset.pace===pace);recordInput();}
 for(const b of document.querySelectorAll('[data-pace]'))b.onclick=()=>setPace(b.dataset.pace);
@@ -43,12 +51,12 @@ addEventListener('keydown',e=>{if(e.target.matches('button,select,input,summary'
 addEventListener('visibilitychange',()=>{if(document.hidden)setPaused(true);});
 addEventListener('racecontextlost',()=>{setPaused(true);show('#error',true);$('#error').textContent='Graphics paused. Waiting for the browser to restore the stadium. If it does not recover, reload this page; your farm save is safe.';});
 function start(){
- if(!world)return;const seed=eventSeed;currentRun={version:RULES_VERSION,horse:JSON.parse(JSON.stringify(selected)),metres,seed,options:{plan,track},inputs:[]};race=createRace(currentRun.horse,metres,seed,currentRun.options);inputs=[{tick:0,pace:'cruise',lane:0,burst:false}];command={pace:'cruise',lane:0,burst:false};
- phase='countdown';countdown=3.8;paused=false;accumulator=0;finishWait=0;lastPosition=1;finalCalled=false;slowmo=0;camIndex=0;world.cameraMode('Director');$('#camera').textContent='Camera: Director';
- show('#field',true);show('#setup',false);show('#venue',false);show('#hud',true);show('#results',false);show('#pause',true);show('#replay-label',false);show('.race-controls',true);$('#burst').disabled=false;$('#burst').innerHTML='<small>ONE CHANCE. MAKE IT COUNT.</small><b>✦ SKYBREAK</b>';$('#lane').textContent='1';for(const b of document.querySelectorAll('[data-pace]'))b.classList.toggle('selected',b.dataset.pace==='cruise');$('#horse-name').textContent=selected.name;$('#pause').textContent='Pause';announce('WELCOME TO THE SKYLINE CUP',2.2);activateAudio();updateHUD();
+ if(!world)return;if(!availableJockey(latestFarm(),jockeyId)){announce('CHOOSE AN AVAILABLE JOCKEY');return;}bookingDone=false;const seed=eventSeed;currentRun={version:RULES_VERSION,horse:JSON.parse(JSON.stringify(selected)),metres,seed,options:{plan,track,jockeyId},raceId:crypto.randomUUID(),inputs:[]};race=createRace(currentRun.horse,metres,seed,currentRun.options);inputs=[{tick:0,pace:'cruise',lane:0,burst:false}];command={pace:'cruise',lane:0,burst:false};
+ phase='countdown';countdown=3.8;paused=false;accumulator=0;finishWait=0;lastPosition=1;finalCalled=false;slowmo=0;world.cameraMode(cams[camIndex]);$('#camera').textContent='Camera: '+cams[camIndex];
+ show('#field',true);show('#setup',false);show('#venue',false);show('#hud',true);show('#results',false);show('#pause',true);show('#replay-label',false);show('.race-controls',true);$('#burst').disabled=false;$('#burst').innerHTML='<small>ONE CHANCE. MAKE IT COUNT.</small><b>✦ SKYBREAK</b>';$('#lane').textContent='1';for(const b of document.querySelectorAll('[data-pace]'))b.classList.toggle('selected',b.dataset.pace==='cruise');$('#horse-name').textContent=selected.name+' · '+jockeyById(jockeyId).name;$('#pause').textContent='Pause';announce('WELCOME TO THE SKYLINE CUP',2.2);activateAudio();updateHUD();
 }
 $('#start').onclick=start;
-function toLobby(){phase='lobby';race=null;currentRun=null;paused=false;accumulator=0;document.body.classList.remove('bursting');$('#callout').classList.remove('visible');$('#countdown').textContent='';for(const s of ['#hud','#results','#pause','#pause-panel','#replay-label','#field'])show(s,false);show('#setup',true);show('#venue',true);world?.cameraMode('Chase');historyUI();if(audio&&soundEnabled)audio.resume();}
+function toLobby(){phase='lobby';race=null;currentRun=null;paused=false;accumulator=0;document.body.classList.remove('bursting');$('#callout').classList.remove('visible');$('#countdown').textContent='';for(const s of ['#hud','#results','#pause','#pause-panel','#replay-label','#field'])show(s,false);show('#setup',true);show('#venue',true);world?.cameraMode(cams[camIndex]);$('#camera').textContent='Camera: '+cams[camIndex];historyUI();renderJockeys();if(audio&&soundEnabled)audio.resume();}
 $('#again').onclick=toLobby;
 function startReplay(){if(!lastRun||lastRun.version!==RULES_VERSION)return;race=createRace(lastRun.horse,lastRun.metres,lastRun.seed,lastRun.options);phase='replay';paused=false;accumulator=0;replayAt=0;finishWait=0;slowmo=0;finalCalled=false;lastPosition=1;command={pace:'cruise',lane:0,burst:false};show('#results',false);show('#replay-label',true);show('.race-controls',false);show('#pause',true);$('#pause').textContent='Pause';announce('EVERY STRIDE. ONE MORE TIME.');world.cameraMode(cams[camIndex]);}
 $('#replay').onclick=startReplay;$('#exit-replay').onclick=()=>finishRace(false);$('#replay-speed').onclick=()=>{replaySpeed=replaySpeed===1?2:replaySpeed===2?.5:1;$('#replay-speed').textContent=replaySpeed+'×';};
@@ -58,9 +66,9 @@ function finishRace(persist){
  const final=replay&&!race.done?lastRun.result:raceOrder(race).map(h=>({id:h.id,name:h.name,finish:h.finish}));
  const place=final.findIndex(h=>h.id==='player')+1,player=final.find(h=>h.id==='player'),winner=final[0];
  $('#result-title').textContent=place===1?'You touched the sky.':place===2?'A heartbeat away.':place===3?'A place on the podium.':'Every stride tells a story.';
- $('#result-subtitle').textContent=`${player.name} · ${race.metres}m · ${timeLabel(player.finish)} · Finished ${place} of 6`;
+ $('#result-subtitle').textContent=`${player.name} · ${race.runners[0].jockey.name} · ${race.metres}m · ${timeLabel(player.finish)} · Finished ${place} of 6`;
  $('#result-table').innerHTML=final.map((h,i)=>`<div class="result-row ${h.id==='player'?'you':''}"><b>${i+1}</b><span>${escape(h.name)}${h.id==='player'?' <small>YOU</small>':''}</span><time>${timeLabel(h.finish)}</time><small>${i===0?'WINNER':'+'+(h.finish-winner.finish).toFixed(2)+'s'}</small></div>`).join('');
- if(persist&&currentRun){lastRun={...currentRun,inputs:inputs.map(c=>({...c})),result:final};const history=readHistory();history.unshift({horse:player.name,metres:race.metres,place,seconds:player.finish,date:new Date().toISOString()});try{localStorage.setItem('meadow-race-history-v1',JSON.stringify(history.slice(0,10)));localStorage.setItem('meadow-race-replay-v1',JSON.stringify(lastRun));}catch{}}
+ if(persist&&currentRun){lastRun={...currentRun,inputs:inputs.map(c=>({...c})),result:final};const history=readHistory();history.unshift({horse:player.name,jockey:race.runners[0].jockey.name,metres:race.metres,place,seconds:player.finish,date:new Date().toISOString()});try{localStorage.setItem('meadow-race-history-v1',JSON.stringify(history.slice(0,10)));localStorage.setItem('meadow-race-replay-v1',JSON.stringify(lastRun));}catch{}}
  if(!replay){announce(place===1?'SKYLINE CHAMPION':'THE CROWD SALUTES YOU',3);tone(523,.3);setTimeout(()=>tone(659,.3),170);setTimeout(()=>tone(784,.5),340);}
 }
 function updateHUD(){if(!race)return;const h=race.runners[0],order=raceOrder(race),place=order.findIndex(x=>x.id==='player')+1;
@@ -80,7 +88,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min(.1,(now-last)
  if(!paused){
   if(phase==='countdown'){
    countdown-=dt;const n=Math.ceil(countdown-.8);$('#countdown').textContent=n>0?String(n):'RUN!';if(n!==lastCount&&n>=0){tone(n>0?300:600,.12);lastCount=n;}
-   if(countdown<=0){$('#countdown').textContent='';phase='race';announce('THE GATES FLY OPEN!',1.8);}
+   if(countdown<=0){try{if(!bookingDone){if(jockeyId!=='stable')updateFarm(s=>bookJockey(s,jockeyId,currentRun.raceId));bookingDone=true;}}catch(e){toLobby();$('#jockey-message').textContent=e.message;return;}$('#countdown').textContent='';phase='race';announce('THE GATES FLY OPEN!',1.8);}
   }
   if(phase==='race'||phase==='replay'){
    if(slowmo>0)slowmo-=dt;const factor=phase==='replay'?replaySpeed:slowmo>0?.4:1;accumulator+=dt*factor;
@@ -99,4 +107,4 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min(.1,(now-last)
  }
  if(now>announcementUntil)$('#callout').classList.remove('visible');
 }
-if(world){world.ready.then(ok=>{$('#start').disabled=!ok;$('#start').textContent=ok?'Enter the starting gate  ↗':'Horse models unavailable — reload';$('#load-note').textContent=ok?'Animated horses ready · Free local practice':'The full horse models could not load. Reload to retry; the race will not substitute block horses.';});requestAnimationFrame(frame);}
+if(world){world.ready.then(ok=>{if(ok)world.setJockey?.(jockeyById(jockeyId));$('#start').disabled=!ok;$('#start').textContent=ok?'Enter the starting gate  ↗':'Horse models unavailable — reload';$('#load-note').textContent=ok?'Animated horses ready · Free local practice':'The full horse models could not load. Reload to retry; the race will not substitute block horses.';});requestAnimationFrame(frame);}

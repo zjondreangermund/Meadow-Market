@@ -1,9 +1,9 @@
 import * as T from './three.module.js';
 import {fitRig,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
-import {createJockey} from './jockey.js?v=motion4';
+import {createJockey} from './jockey.js?v=recruit5';
 import {racingPose} from './race-motion.js';
-import {safeRaceCamera,cameraClear} from './race-camera.js';
+import {safeRaceCamera,cameraClear} from './race-camera.js?v=recruit5';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
@@ -65,7 +65,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=256;trackCa
  for(let i=0;i<17;i++){let x=Math.sin(i*8.3)*200,z=Math.cos(i*6.4)*190;const g=new T.Group();g.position.set(x,60+(i%3)*9,z);for(let j=0;j<4;j++)ball('#e9d9e7',j*6,Math.sin(j)*2,0,8,3,4,g);scene.add(g);}
  // Trackside cherry trees and warm lanterns.
  for(let i=0;i<28;i++){const s=sample(i/28),p=s.p.addScaledVector(s.normal,34);if(Math.abs(p.z)>58&&Math.abs(p.x)<78)continue;cylinder('#756070',p.x,2,p.z,.35,4);ball(i%2?'#d4a5ba':'#bda0bd',p.x,5,p.z,3.4,2.8,3);}
- const staticObstacles=[];scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&o.geometry?.parameters?.radius!==490){const b=new T.Box3().setFromObject(o);if(b.max.y>.8&&b.max.x-b.min.x<180&&b.max.z-b.min.z<180)staticObstacles.push(b);}});
+ const staticObstacles=[];scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&o.geometry?.parameters?.radius!==490){let ancestor=o,inGate=false;while(ancestor){if(ancestor===gates)inGate=true;ancestor=ancestor.parent;}if(inGate)return;const b=new T.Box3().setFromObject(o);if(b.max.y>.8&&b.max.x-b.min.x<180&&b.max.z-b.min.z<180)staticObstacles.push(b);}});
  // Full horse and humanoid assets are required before entry; no placeholder racers.
  const racers=[];
  function fallback(){return {g:new T.Group(),legs:[]};}
@@ -73,7 +73,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=256;trackCa
  for(let i=0;i<6;i++){const root=new T.Group(),f=fallback(coat[i]),jockey=createJockey(SILKS[i],i+1);root.add(f.g,jockey);root.visible=false;scene.add(root);racers.push({root,fallback:f,jockey,mixer:null,action:null});}
  const dust=new T.InstancedMesh(new T.SphereGeometry(.13,5,4),new T.MeshBasicMaterial({color:'#e8ccad',transparent:true,opacity:.32,depthWrite:false}),72);scene.add(dust);const particles=Array.from({length:72},(_,i)=>({age:i/30,life:.45+(i%5)*.08,pos:new T.Vector3()}));
  const confetti=new T.InstancedMesh(new T.PlaneGeometry(.16,.3),new T.MeshBasicMaterial({side:T.DoubleSide}),160);confetti.visible=false;scene.add(confetti);for(let i=0;i<160;i++)confetti.setColorAt(i,new T.Color(SILKS[i%6]));
- let loaded=false,angle=0,camMode='Director',elapsed=0,finishAge=0;const look=new T.Vector3(),desiredPos=new T.Vector3(),desiredLook=new T.Vector3();let first=true;
+ let loaded=false,angle=0,camMode='Chase',zoomFactor=1,elapsed=0,finishAge=0;const look=new T.Vector3(),desiredPos=new T.Vector3(),desiredLook=new T.Vector3();let first=true;
  const ready=new GLTFLoader().loadAsync('./models/horse.gltf').then(async asset=>{
   for(let i=0;i<6;i++){
    const r=racers[i],model=clone(asset.scene),smoothed=smoothRig(model),fitted=fitRig(model,2.65);
@@ -81,7 +81,10 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=256;trackCa
    r.root.add(model);r.fallback.g.visible=false;r.model=model;r.mixer=new T.AnimationMixer(model);const clip=asset.animations.find(a=>/gallop$/i.test(a.name))||asset.animations.find(a=>/walk$/i.test(a.name));const idle=asset.animations.find(a=>/idle$/i.test(a.name));if(clip)r.action=r.mixer.clipAction(clip);if(idle)r.idle=r.mixer.clipAction(idle).play();
   }await Promise.all(racers.map(r=>r.jockey.userData.ready));for(const r of racers){const b=skinBounds(r.model);if(b.max.y-b.min.y<1.9)throw Error('Horse rig failed visible-size validation.');}for(const r of racers)r.root.visible=true;loaded=true;return true;
  }).catch(e=>{console.warn('Race assets unavailable; racing remains disabled.',e);return false;});
- function cameraMode(mode){camMode=mode;first=true;}
+ function setJockey(profile){racers[0].jockey.userData.setSilks?.(profile.color);racers[0].jockey.userData.riderName=profile.name;}
+ function cameraMode(mode){if(['Director','Chase','Rail','Broadcast'].includes(mode))camMode=mode;first=true;}
+ function zoom(delta){zoomFactor=T.MathUtils.clamp(zoomFactor*Math.exp(delta),.55,1.9);return zoomFactor;}
+ const cameraTouches=new Map();let pinchDistance=0;const lens=renderer.domElement;if(lens.style)lens.style.touchAction='none';lens.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY*.001);},{passive:false});lens.addEventListener('pointerdown',e=>{cameraTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});lens.setPointerCapture?.(e.pointerId);if(cameraTouches.size===2){const p=[...cameraTouches.values()];pinchDistance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});lens.addEventListener('pointermove',e=>{if(!cameraTouches.has(e.pointerId))return;cameraTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cameraTouches.size===2){const p=[...cameraTouches.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(d>8&&pinchDistance>8)zoom(Math.log(pinchDistance/d));pinchDistance=d;}});for(const event of ['pointerup','pointercancel'])lens.addEventListener(event,e=>{cameraTouches.delete(e.pointerId);pinchDistance=0;});
  const tmp=new T.Vector3();
  function update(dt,race,phase='lobby',winner=false){
   elapsed+=dt;const active=phase==='race'||phase==='replay';let user=race?.runners[0];const lit=sample((user?.distance||0)/400,user?.lane||0).p;sun.target.position.copy(lit);sun.position.copy(lit).add(new T.Vector3(-45,70,35));sun.target.updateMatrixWorld();
@@ -101,16 +104,17 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=256;trackCa
   }else {
    const s=sample((user?.distance||0)/400,user?.lane||0),p=s.p;
    const mode=camMode==='Director'?(phase==='finish'?'Rail':(user?.distance||0)<100?'Chase':(user?.distance||0)>race.metres-200?'Chase':Math.floor((user?.distance||0)/85)%3===1?'Rail':'Chase'):camMode;
-   if(mode==='Chase'){desiredPos.copy(p).addScaledVector(s.dir,-8).addScaledVector(s.normal,3.5);desiredPos.y+=4.0;desiredLook.copy(p).addScaledVector(s.dir,1.2);desiredLook.y+=1.65;}
-   else if(mode==='Rail'){desiredPos.copy(p).addScaledVector(s.normal,8).addScaledVector(s.dir,2);desiredPos.y+=2.9;desiredLook.copy(p).addScaledVector(s.dir,.8);desiredLook.y+=1.7;}
+   if(mode==='Chase'){desiredPos.copy(p).addScaledVector(s.dir,-8).addScaledVector(s.normal,3.5);desiredPos.y+=4.0;desiredLook.copy(p);desiredLook.y+=1.65;}
+   else if(mode==='Rail'){desiredPos.copy(p).addScaledVector(s.normal,8).addScaledVector(s.dir,2);desiredPos.y+=2.9;desiredLook.copy(p);desiredLook.y+=1.7;}
    else{desiredPos.set(p.x*.8,62,p.z*.8+34);desiredLook.copy(p);}
   }
-  let cameraObstacles=[];if((active||phase==='countdown')&&user){cameraObstacles=staticObstacles.filter(b=>b.distanceToPoint(desiredLook)<24);for(let i=1;i<racers.length;i++){const r=racers[i];if(r.root.position.distanceTo(desiredLook)>22)continue;const box=new T.Box3(new T.Vector3(-.7,.15,-1.65),new T.Vector3(.7,3.45,1.75));r.root.updateMatrixWorld(true);box.applyMatrix4(r.root.matrixWorld);cameraObstacles.push(box);}const direction=sample(user.distance/400,user.lane).dir;desiredPos.copy(safeRaceCamera(desiredLook,desiredPos,direction,cameraObstacles));}
+  if(active||phase==='countdown'||phase==='finish')desiredPos.sub(desiredLook).multiplyScalar(zoomFactor).add(desiredLook);
+  let cameraObstacles=[];if((active||phase==='countdown')&&user){cameraObstacles=staticObstacles.filter(b=>b.distanceToPoint(desiredLook)<24);for(let i=1;i<racers.length;i++){const r=racers[i];if(r.root.position.distanceTo(desiredLook)>22)continue;const box=new T.Box3(new T.Vector3(-.7,.15,-1.65),new T.Vector3(.7,3.45,1.75));r.root.updateMatrixWorld(true);cameraObstacles.push({box,matrix:r.root.matrixWorld.clone()});}const direction=sample(user.distance/400,user.lane).dir;desiredPos.copy(safeRaceCamera(desiredLook,desiredPos,direction,cameraObstacles));}
   const blend=first?1:1-Math.exp(-dt*(reduced?9:3));camera.position.lerp(desiredPos,blend);look.lerp(desiredLook,blend);first=false;if((active||phase==='countdown')&&user&&!cameraClear(look,camera.position,cameraObstacles)){camera.position.copy(safeRaceCamera(look,desiredPos,sample(user.distance/400,user.lane).dir,cameraObstacles));}camera.lookAt(look);
   const targetFov=user?.burst>0&&!reduced?58:48;camera.fov=T.MathUtils.lerp(camera.fov,targetFov,Math.min(1,dt*3));camera.updateProjectionMatrix();renderer.render(scene,camera);
  }
  function quality(level){const high=level==='High';renderer.setPixelRatio(Math.min(devicePixelRatio,high?2:1));renderer.shadowMap.enabled=high;sun.shadow.mapSize.set(high?2048:1024,high?2048:1024);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.setSize(innerWidth,innerHeight);}
  function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener('resize',resize);
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();window.dispatchEvent(new Event('racecontextlost'));});renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
- return {ready,update,cameraMode,quality,renderer,scene,racers,sample,loaded:()=>loaded};
+ return {ready,update,cameraMode,setJockey,zoom,cameraState:()=>({mode:camMode,zoom:zoomFactor,position:camera.position.clone()}),quality,renderer,scene,racers,sample,loaded:()=>loaded};
 }

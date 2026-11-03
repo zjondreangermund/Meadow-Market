@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {TaskQueue} from '../dist/task-queue.js';
+import {hireJockey,bookJockey,availableJockey} from '../dist/jockeys.js';
+const starts=[];const q=new TaskQueue(j=>{starts.push(j.key);if(j.key==='bad')throw Error('unavailable');});
+q.enqueue({key:'a'});q.enqueue({key:'b'});q.enqueue({key:'bad'});q.enqueue({key:'c'});assert.equal(q.active.key,'a');assert.throws(()=>q.enqueue({key:'a'}));q.remove(q.active.id);assert.equal(q.active.key,'a');q.finish();assert.equal(q.active.key,'b');q.finish();assert.equal(q.active.key,'c');assert.deepEqual(starts,['a','b','bad','c']);q.clearWaiting();assert.equal(q.active.key,'c');q.finish();assert.equal(q.busy,false);
+const save={coins:800,day:3};hireJockey(save,'mara');assert.equal(save.coins,680);assert.throws(()=>hireJockey(save,'mara'));bookJockey(save,'mara','one');bookJockey(save,'mara','one');assert.equal(save.jockeyRoster.mara.remaining,2);bookJockey(save,'mara','two');bookJockey(save,'mara','three');assert.equal(availableJockey(save,'mara'),false);assert.throws(()=>bookJockey(save,'mara','four'));hireJockey(save,'mara');assert.equal(save.coins,560);assert.equal(save.jockeyDebits,240);assert.equal(save.jockeyRoster.mara.remaining,3);assert.throws(()=>hireJockey({coins:0},'kai'));assert.equal(availableJockey(save,'stable'),true);
+console.log('PASS: FIFO, no interruption, duplicate protection, failed task skip, contract cost, idempotent starts, exhaustion and renewal.');
