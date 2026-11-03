@@ -36,7 +36,8 @@ export function visualSeed(value){const s=String(value);let h=2166136261;for(let
 export function coatFor(type,key,slot){
  const choices=COATS[type]||COATS.horse;
  const seed=visualSeed(type+':'+String(key));
- const chosen=choices[(Number.isInteger(slot)&&slot>=0?slot:seed)%choices.length];
+ const choice=typeof slot==='string'?choices.find(v=>v.id===slot):null;
+ const chosen=choice||choices[(Number.isInteger(slot)&&slot>=0?slot:seed)%choices.length];
  return {...chosen,seed,key:String(key),type};
 }
 const textureCache=new Map();
@@ -61,24 +62,45 @@ function paint(type,key,slot){
   ctx.fillRect(x,y,w,.7+r()*2.5);
  }
  if(coat.pattern==='patches'||coat.pattern==='face'){
-  const count=type==='pig'?10:type==='cow'?12:8;
-  for(let i=0;i<count;i++)patch(ctx,r,30+r()*455,25+r()*455,17+r()*65,15+r()*70,coat.accent);
+  // Each canvas is two actual flanks, from rump to muzzle. Large coherent
+  // markings instead of tiny specks ensure the pattern reads at game camera distance.
+  for(let side=0;side<2;side++){
+   const left=side*256,body=coat.pattern==='face'?4:type==='horse'?6:type==='cow'?7:5;
+   for(let i=0;i<body;i++){
+    const x=left+38+r()*150,y=112+r()*190;
+    patch(ctx,r,x,y,22+r()*(type==='horse'?45:53),19+r()*55,coat.accent);
+   }
+   if(coat.pattern==='face')patch(ctx,r,left+221,85,22,70,coat.accent);
+   if(type==='horse'&&coat.pattern==='patches'){
+    // A conspicuous white shoulder and rump, with different contours on either side.
+    patch(ctx,r,left+90,245,51,72,coat.accent);
+    patch(ctx,r,left+177,206,39,59,coat.accent);
+   }
+  }
  }
  if(coat.pattern==='star'){
-  patch(ctx,r,245,120,16,24,coat.accent);patch(ctx,r,410,320,9,17,coat.accent);
+  for(const half of [0,256])patch(ctx,r,half+215,70,9,15,coat.accent);
  }
  if(coat.pattern==='stripe'){
-  patch(ctx,r,260,115,12,105,coat.accent);patch(ctx,r,410,365,12,54,coat.accent);
+  ctx.fillStyle=coat.accent;
+  for(const half of [0,256]){
+   patch(ctx,r,half+217,75,15,60,coat.accent);
+   patch(ctx,r,half+77,443,26,34,coat.accent);
+   patch(ctx,r,half+172,445,23,38,coat.accent);
+  }
  }
  if(coat.pattern==='points'){
-  ctx.fillStyle=coat.accent;ctx.fillRect(0,430,512,82);
+  // Buckskin coat contrasts with dark lower legs and dark mane/tail material.
+  ctx.fillStyle=coat.accent;ctx.fillRect(0,425,512,87);
  }
  if(coat.pattern==='belt'){
-  ctx.fillStyle=coat.accent;ctx.fillRect(180,0,115,512);
+  // Broad white band around the mid-body, on both sides of the animal.
+  ctx.fillStyle=coat.accent;
+  for(const half of [0,256])ctx.fillRect(half+113,90,60,325);
  }
  if(coat.pattern==='dapples'){
   for(let i=0;i<230;i++){
-   const x=r()*size,y=r()*size,rad=3+r()*11;ctx.globalAlpha=.12+r()*.28;ctx.fillStyle=coat.accent;ctx.beginPath();ctx.ellipse(x,y,rad,rad*.7,0,0,Math.PI*2);ctx.fill();
+   const x=r()*size,y=r()*size,rad=5+r()*17;ctx.globalAlpha=.12+r()*.28;ctx.fillStyle=coat.accent;ctx.beginPath();ctx.ellipse(x,y,rad,rad*.7,0,0,Math.PI*2);ctx.fill();
   }ctx.globalAlpha=1;
  }
  if(coat.pattern==='freckles'||coat.pattern==='feathers'){
@@ -90,6 +112,30 @@ function paint(type,key,slot){
  }
  const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=4;tex.needsUpdate=true;
  textureCache.set(cacheKey,tex);return tex;
+}
+// The supplied Quaternius horse and cow have NO TEXCOORD_0. Their original
+// materials could change flat colour but never displayed CanvasTexture patterns.
+// Add a distinct cylindrical/side UV projection to each skinned mesh's *own*
+// geometry. Skin attributes/bone weights and animation clips remain untouched.
+export function ensureCoatUV(mesh,type){
+ if(mesh.geometry?.attributes?.uv)return false;
+ const original=mesh.geometry,position=original?.attributes?.position;
+ if(!position||!position.count)return false;
+ const geometry=original.clone();
+ const p=geometry.attributes.position,uv=new Float32Array(p.count*2);
+ const limits=type==='horse'?{y0:-.1,y1:4.95,z0:-2.35,z1:3.55}:type==='cow'?{y0:-.1,y1:5.13,z0:-3.15,z1:5.25}:null;
+ if(!limits){geometry.computeBoundingBox();}
+ const b=geometry.boundingBox;
+ const y0=limits?.y0??b.min.y,y1=limits?.y1??b.max.y,z0=limits?.z0??b.min.z,z1=limits?.z1??b.max.z;
+ for(let i=0;i<p.count;i++){
+  const side=p.getX(i)<0?0:1,z=(p.getZ(i)-z0)/Math.max(.001,z1-z0),y=(p.getY(i)-y0)/Math.max(.001,y1-y0);
+  uv[i*2]=side*.5+T.MathUtils.clamp(z,0,1)*.496;
+  uv[i*2+1]=1-T.MathUtils.clamp(y,0,1);
+ }
+ geometry.setAttribute('uv',new T.BufferAttribute(uv,2));
+ geometry.userData={...geometry.userData,coatUV:'flank-v2'};
+ mesh.geometry=geometry;
+ return true;
 }
 function isSeparatePart(name){return /eye|pupil|teeth|nostril|hoof|horn|saddle|rein|tack|metal|leather|collar|mouth|tongue|inner_ear/i.test(name);}
 function isMane(name){return /mane|hair|tail|bristle/i.test(name);}
@@ -103,8 +149,12 @@ export function applyAnimalCoat(model,type,key,slot){
    if(isSeparatePart(name))return next;
    next.metalness=0;next.roughness=type==='horse'?.72:type==='pig'?.91:.84;next.flatShading=false;
    if(isMane(name)){next.map=null;next.color.set(coat.mane);}
-   else if(texture&&o.geometry?.attributes?.uv){next.map=texture;next.color.set('#ffffff');}
-   else next.color.set(coat.base);
+   else {
+    // Make the original no-UV horse/cow models truly accept patterned hide maps.
+    if(texture)ensureCoatUV(o,type);
+    if(texture&&o.geometry?.attributes?.uv){next.map=texture;next.color.set('#ffffff');}
+    else {next.map=null;next.color.set(coat.base);}
+   }
    next.transparent=false;next.opacity=1;next.depthWrite=true;next.needsUpdate=true;
    return next;
   });
