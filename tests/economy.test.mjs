@@ -1,8 +1,9 @@
+import {plantSeeds,waterCrop} from '../dist/crops.js';
 import assert from 'node:assert/strict';
 import {fresh,fill,advance,collectWell,harvest,mill,trade,demand,HERDS} from '../dist/economy.js';
 let s=fresh();const before={...s.inventory};fill(s,'cows','feed');assert.equal(s.inventory.feed,before.feed-8);assert.throws(()=>fill(s,'cows','feed'));advance(s);assert.equal(s.inventory.milk,0,'Feed without water or supplement must not produce');fill(s,'cows','water');fill(s,'cows','fruit');advance(s);assert.equal(s.inventory.milk,8);assert.equal(s.troughs.cows.feed,0);advance(s);assert.equal(s.inventory.milk,8,'No duplicate production');assert.throws(()=>collectWell(s));
 s=fresh('water');let w=s.inventory.water;collectWell(s);assert.equal(s.inventory.water,w+40);assert.throws(()=>collectWell(s));advance(s);collectWell(s);assert.equal(s.inventory.water,w+80);assert.throws(()=>harvest(s));
-s=fresh('grower');harvest(s);assert.equal(s.inventory.maize,36);assert.throws(()=>harvest(s));
+s=fresh('grower');assert.throws(()=>harvest(s));plantSeeds(s);waterCrop(s);assert.throws(()=>harvest(s));advance(s);harvest(s);assert.equal(s.inventory.maize,36);assert.throws(()=>harvest(s));
 s=fresh('miller');mill(s);assert.equal(s.inventory.maize,2);assert.equal(s.inventory.feed,34);assert.throws(()=>mill(s));
 s=fresh();trade(s,'water',10,'buy');assert.equal(s.coins,790);assert.equal(s.inventory.water,30);trade(s,'water',10,'sell');assert.equal(s.coins,799);assert.equal(s.inventory.water,20);assert.throws(()=>trade(s,'water',-10,'buy'));assert.throws(()=>trade(s,'water',1.5,'buy'));assert.throws(()=>trade(s,'eggs',10,'sell'));let o=s.offers.find(o=>o.good==='water');o.stock=0;assert.throws(()=>trade(s,'water',10,'buy'));let demandBefore=o.buy;advance(s);assert.equal(o.buy,demandBefore,'No fabricated new buyers');
 console.log('PASS: rations, missing ingredients, duplicate prevention, role ownership, daily caps, recipes, market stock, market demand, fees and invalid trades.');

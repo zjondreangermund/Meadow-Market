@@ -1,8 +1,8 @@
 import {horsesFor} from './horses.js';
 import {fresh} from './economy.js';
 import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js';
-import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=raceday6';
-import {createRaceScene,SILKS} from './race-scene.js?v=raceday6';
+import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=farm7';
+import {createRaceScene,SILKS} from './race-scene.js?v=farm7';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
@@ -34,6 +34,7 @@ function announce(text,seconds=2.5){$('#callout-text').textContent=text;$('#call
 function tone(hz,duration=.08,volume=.04,type='sine'){if(!soundEnabled||!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(hz,audio.currentTime);g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}
 function activateAudio(){if(audio){audio.resume();return;}const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;try{audio=new AC();const buf=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),data=buf.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1);const src=audio.createBufferSource();src.buffer=buf;src.loop=true;const filter=audio.createBiquadFilter();filter.type='bandpass';filter.frequency.value=650;const gain=audio.createGain();gain.gain.value=soundEnabled?.028:0;src.connect(filter);filter.connect(gain);gain.connect(audio.destination);src.start();noise=gain;}catch{soundEnabled=false;}}
 $('#sound').onclick=()=>{soundEnabled=!soundEnabled;activateAudio();$('#sound').textContent=soundEnabled?'Sound on':'Sound off';$('#sound').setAttribute('aria-pressed',String(soundEnabled));if(noise)noise.gain.value=soundEnabled?.028:0;};
+$('#atmosphere').onclick=()=>{const next=$('#atmosphere').textContent.includes('Neon')?'Day':'Neon';$('#atmosphere').textContent='Scene: '+next;world?.setAtmosphere?.(next);};
 $('#quality').onclick=()=>{const next=$('#quality').textContent.includes('High')?'Performance':'High';$('#quality').textContent='Visuals: '+next;world?.quality?.(next);};
 $('#field').onclick=()=>{const compact=$('#leaderboard').classList.toggle('compact');$('#field').textContent=compact?'Field +':'Field −';};
 $('#zoom-in').onclick=()=>world?.zoom?.(-.15);$('#zoom-out').onclick=()=>world?.zoom?.(.15);

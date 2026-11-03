@@ -1,10 +1,10 @@
 import * as T from './three.module.js';
-import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js?v=raceday6';
+import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js?v=farm7';
 import {fitRig,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
-import {createJockey} from './jockey.js?v=raceday6';
+import {createJockey} from './jockey.js?v=farm7';
 import {racingPose} from './race-motion.js';
-import {safeRaceCamera,cameraClear} from './race-camera.js?v=raceday6';
+import {safeRaceCamera,cameraClear} from './race-camera.js?v=farm7';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
@@ -14,7 +14,7 @@ export function createRaceScene(container){
  const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;container.append(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#adc7cb');scene.fog=new T.Fog('#c4d3d0',240,480);
  const camera=new T.PerspectiveCamera(48,innerWidth/innerHeight,.1,650);camera.position.set(110,60,120);
- scene.add(new T.HemisphereLight('#d9efff','#536545',1.45));const sun=new T.DirectionalLight('#ffe0b4',2.7);sun.position.set(-70,110,65);sun.castShadow=true;sun.shadow.normalBias=.025;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:160});sun.shadow.bias=-.0007;scene.add(sun,sun.target);const rim=new T.DirectionalLight('#9dc8f1',.9);rim.position.set(65,35,-70);scene.add(rim);
+ const ambient=new T.HemisphereLight('#d9efff','#536545',1.45);scene.add(ambient);const sun=new T.DirectionalLight('#ffe0b4',2.7);sun.position.set(-70,110,65);sun.castShadow=true;sun.shadow.normalBias=.025;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:160});sun.shadow.bias=-.0007;scene.add(sun,sun.target);const rim=new T.DirectionalLight('#9dc8f1',.9);rim.position.set(65,35,-70);scene.add(rim);
  const coatDetail=detailTexture('coat',1024),silkDetail=detailTexture('silk',512);coatDetail.repeat.set(3,3);const maxAnisotropy=renderer.capabilities?.getMaxAnisotropy?.()||4;coatDetail.anisotropy=Math.min(8,maxAnisotropy);
  const ramp=new T.DataTexture(new Uint8Array([95,95,95,255,165,165,165,255,255,255,255,255]),3,1,T.RGBAFormat);ramp.minFilter=T.NearestFilter;ramp.magFilter=T.NearestFilter;ramp.needsUpdate=true;
  const materials=new Map(),geom={box:new T.BoxGeometry(1,1,1),sphere:new T.SphereGeometry(1,24,16),cylinder:new T.CylinderGeometry(1,1,1,10)};
@@ -69,6 +69,8 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
  // Trackside cherry trees and warm lanterns.
  for(let i=0;i<28;i++){const s=sample(i/28),p=s.p.addScaledVector(s.normal,34);if(Math.abs(p.z)>58&&Math.abs(p.x)<78)continue;cylinder('#756070',p.x,2,p.z,.35,4);ball(i%2?'#d4a5ba':'#bda0bd',p.x,5,p.z,3.4,2.8,3);}
  const raceDayVenue=addRaceDayVenue(scene,sample,mobile);
+ const neon=new T.Group();neon.name='Skyline luminous racing rails';scene.add(neon);for(const [offset,color] of [[-2,'#61ebdc'],[13,'#bf8bfa']]){const curve=new T.CatmullRomCurve3(Array.from({length:128},(_,i)=>{const s=sample(i/128);return s.p.addScaledVector(s.normal,offset).add(new T.Vector3(0,.30,0));}),true);neon.add(new T.Mesh(new T.TubeGeometry(curve,256,.045,6,true),new T.MeshBasicMaterial({color})));}
+ function setAtmosphere(mode){const night=mode==='Neon';neon.visible=night;sky.material.color.set(night?'#344665':'#ffffff');scene.fog.color.set(night?'#263a50':'#c4d3d0');sun.intensity=night?1.7:2.7;sun.color.set(night?'#cdd8ee':'#ffe0b4');ambient.intensity=night?.95:1.45;rim.intensity=night?1.9:.9;rim.color.set(night?'#77e7dc':'#9dc8f1');renderer.toneMappingExposure=night?1.23:1.13;}setAtmosphere('Neon');
  const staticObstacles=[];scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&o.geometry?.parameters?.radius!==490){let ancestor=o,inGate=false;while(ancestor){if(ancestor===gates)inGate=true;ancestor=ancestor.parent;}if(inGate)return;const b=new T.Box3().setFromObject(o);if(b.max.y>.8&&b.max.x-b.min.x<180&&b.max.z-b.min.z<180)staticObstacles.push(b);}});
  // Full horse and humanoid assets are required before entry; no placeholder racers.
  const racers=[];
@@ -129,5 +131,5 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
  function quality(level){const high=level==='High';renderer.setPixelRatio(Math.min(devicePixelRatio,high?2:1));renderer.shadowMap.enabled=high;sun.shadow.mapSize.set(high?2048:1024,high?2048:1024);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.setSize(innerWidth,innerHeight);}
  function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener('resize',resize);
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();window.dispatchEvent(new Event('racecontextlost'));});renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
- return {ready,update,setPreview,cameraMode,setJockey,zoom,cameraState:()=>({mode:camMode,zoom:zoomFactor,position:camera.position.clone()}),quality,renderer,scene,racers,sample,loaded:()=>loaded};
+ return {ready,update,setAtmosphere,setPreview,cameraMode,setJockey,zoom,cameraState:()=>({mode:camMode,zoom:zoomFactor,position:camera.position.clone()}),quality,renderer,scene,racers,sample,loaded:()=>loaded};
 }
