@@ -6,6 +6,7 @@ import {smoothRig} from './smooth-rig.js';
 import {detailTexture} from './race-day.js';
 import {mountedMotion} from './mounted-motion.js';
 import {applyRaceSilks} from './garment-materials.js';
+import {prepareHumanSurfaces} from './human-surfaces.js';
 const humanAssets=new Map();
 const v=(x,y,z)=>new T.Vector3(x,y,z),clamp=T.MathUtils.clamp;
 // Retain the authored humanoid topology, face, hands, clothing and skeleton.
@@ -25,7 +26,7 @@ export function createJockey(color,number=1,variant='man'){
  const file=variant==='lady'?'farmer-woman.glb':'farmer.glb';
   if(!humanAssets.has(file))humanAssets.set(file,new GLTFLoader().loadAsync('./models/'+file).catch(e=>{humanAssets.delete(file);throw e;}));
   const ready=humanAssets.get(file).then(asset=>{
-  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});root.add(model);root.userData.model=model;
+  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});prepareHumanSurfaces(model);root.add(model);root.userData.model=model;
   model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants|Woman_Pants|Pants|Trousers/i.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet|Woman_Feet|Feet|Boots/i.test(o.name))m.color.set('#252329');else if(/Farmer_Body|Woman_Body|Torso|Shirt|Jacket/i.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige'){m.userData.teamSilk=true;m.roughness=.43;m.bumpMap=detailTexture('silk');m.bumpScale=.008;}}}});applyRaceSilks(model,clothMat,color,number);
   const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
   const standingBase=model.position.clone(),walkMixer=new T.AnimationMixer(model);const walkClip=asset.animations.find(a=>/walk$/i.test(a.name));const walkAction=walkClip?walkMixer.clipAction(walkClip.clone()):null;if(walkAction)walkAction.getClip().tracks=walkAction.getClip().tracks.filter(t=>!/^Root\.position$/.test(t.name));let modelBase;
