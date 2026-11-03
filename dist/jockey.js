@@ -6,11 +6,12 @@ import {smoothRig} from './smooth-rig.js';
 import {detailTexture} from './race-day.js';
 import {mountedMotion} from './mounted-motion.js';
 import {applyRaceSilks} from './garment-materials.js';
-let assetPromise;
+import {prepareHumanSurfaces} from './human-surfaces.js';
+const humanAssets=new Map();
 const v=(x,y,z)=>new T.Vector3(x,y,z),clamp=T.MathUtils.clamp;
 // Retain the authored humanoid topology, face, hands, clothing and skeleton.
 // Riding uses two-bone IK, rather than assembling a person from primitives.
-export function createJockey(color,number=1){
+export function createJockey(color,number=1,variant='man'){
  const root=new T.Group();root.name='Rigged race jockey '+number;
  const leather=new T.MeshStandardMaterial({color:'#352720',roughness:.74}),metal=new T.MeshStandardMaterial({color:'#a69c84',metalness:.7,roughness:.28});
  function prop(geo,mat,x,y,z,sx=1,sy=1,sz=1){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;root.add(m);return m;}
@@ -22,9 +23,11 @@ export function createJockey(color,number=1){
  const labelCanvas=document.createElement('canvas');labelCanvas.width=labelCanvas.height=512;const lc=labelCanvas.getContext('2d');lc.fillStyle=color;lc.fillRect(0,0,512,512);lc.fillStyle='#fff6dc';lc.font='bold 330px serif';lc.textAlign='center';lc.fillText(String(number),256,365);const labelTex=new T.CanvasTexture(labelCanvas);labelTex.colorSpace=T.SRGBColorSpace;const labelMat=new T.MeshStandardMaterial({map:labelTex,roughness:.65,side:T.DoubleSide});for(const side of [-1,1]){const m=prop(new T.PlaneGeometry(.44,.4),labelMat,side*.49,1.56,-.12);m.rotation.y=side*Math.PI/2;}
  const reins=[];for(let i=0;i<2;i++){const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(25*3),3));const line=new T.Line(geo,new T.LineBasicMaterial({color:'#241d1b'}));line.frustumCulled=false;root.add(line);reins.push(line);}
  root.userData.update=()=>{};root.userData.scarf=true;root.userData.onFoot=false;root.userData.setOnFoot=value=>{root.userData.onFoot=!!value;for(const child of root.children)if(child!==root.userData.model)child.visible=!value;};
- const ready=(assetPromise??=new GLTFLoader().loadAsync('./models/farmer.glb')).then(asset=>{
-  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});root.add(model);root.userData.model=model;
-  model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants/.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet/.test(o.name))m.color.set('#252329');else if(/Farmer_Body/.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige'){m.userData.teamSilk=true;m.roughness=.43;m.bumpMap=detailTexture('silk');m.bumpScale=.008;}}}});applyRaceSilks(model,clothMat,color,number);
+ const file=variant==='lady'?'farmer-woman.glb':'farmer.glb';
+  if(!humanAssets.has(file))humanAssets.set(file,new GLTFLoader().loadAsync('./models/'+file).catch(e=>{humanAssets.delete(file);throw e;}));
+  const ready=humanAssets.get(file).then(asset=>{
+  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});prepareHumanSurfaces(model);root.add(model);root.userData.model=model;
+  model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants|Woman_Pants|Pants|Trousers/i.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet|Woman_Feet|Feet|Boots/i.test(o.name))m.color.set('#252329');else if(/Farmer_Body|Woman_Body|Torso|Shirt|Jacket/i.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige'){m.userData.teamSilk=true;m.roughness=.43;m.bumpMap=detailTexture('silk');m.bumpScale=.008;}}}});applyRaceSilks(model,clothMat,color,number);
   const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
   const standingBase=model.position.clone(),walkMixer=new T.AnimationMixer(model);const walkClip=asset.animations.find(a=>/walk$/i.test(a.name));const walkAction=walkClip?walkMixer.clipAction(walkClip.clone()):null;if(walkAction)walkAction.getClip().tracks=walkAction.getClip().tracks.filter(t=>!/^Root\.position$/.test(t.name));let modelBase;
   const saved=Object.values(bones).map(b=>({b,q:b.quaternion.clone(),p:b.position.clone()}));
@@ -66,5 +69,5 @@ export function createJockey(color,number=1){
   root.userData.setSilks=shade=>applyRaceSilks(model,clothMat,shade,number);
   root.userData.update(0,0,{});const b=skinBounds(model);if(b.max.y-b.min.y<1)throw Error('Invalid posed jockey bounds.');return true;
  });
- root.userData.ready=ready;return root;
+ root.userData.avatarVariant=variant;root.userData.ready=ready;return root;
 }

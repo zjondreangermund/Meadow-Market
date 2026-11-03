@@ -13,7 +13,7 @@ jobs:
           node-version: '22'
       - name: Validate JavaScript syntax
         run: |
-          for f in dist/{coat-variants,garment-materials,animal-assets,farmer-rig,jockey,farm,race-scene,race}.js; do
+          for f in dist/{coat-variants,garment-materials,human-surfaces,hd-rig-transfer,hd-animal-pack,animal-assets,farmer-rig,jockey,farm,race-scene,race}.js; do
             node --check "$f"
           done
       - name: Validate full farm and racing regression suite
@@ -22,4 +22,16 @@ jobs:
           for f in tests/*.test.mjs; do
             echo "RUN $f"
             node "$f"
+          done
+      - name: Verify higher-detail CC0 GLB URLs are actually downloadable
+        run: |
+          set -e
+          for id in 29169 29184 29185 29194 29197 29198; do
+            echo "CHECK HD model $id"
+            curl --fail --location --silent --show-error --retry 2 --max-time 25 --range 0-15 \
+              "https://cdn.3dassets.dev/assets/$id/v1/model.glb" -o /tmp/model-check.glb
+            test -s /tmp/model-check.glb
+            if [ "$(head -c 4 /tmp/model-check.glb)" != "glTF" ]; then
+              echo "Invalid GLB file for $id"; exit 1
+            fi
           done

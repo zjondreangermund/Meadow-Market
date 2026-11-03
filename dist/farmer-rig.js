@@ -2,10 +2,12 @@ import * as T from './three.module.js';
 import {fitRig,matteMaterials} from './model-rig.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {dressFarmer} from './garment-materials.js';
+import {smoothRig} from './smooth-rig.js';
+import {prepareHumanSurfaces} from './human-surfaces.js';
 const cache=new Map();
 export async function loadFarmer(variant){const file=variant==='lady'?'farmer-woman.glb':'farmer.glb';if(!cache.has(file))cache.set(file,new GLTFLoader().loadAsync('./models/'+file));return createFarmerRig(await cache.get(file),variant);}
 import {clone} from './vendor/SkeletonUtils.js';
-export function createFarmerRig(asset,variant='man'){const root=new T.Group(),model=clone(asset.scene);root.add(model);fitRig(model,2.55);matteMaterials(model);
+export function createFarmerRig(asset,variant='man'){const root=new T.Group(),model=clone(asset.scene);root.add(model);smoothRig(model);fitRig(model,2.55);matteMaterials(model);prepareHumanSurfaces(model);
  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;o.material=(Array.isArray(o.material)?o.material:[o.material]).map(m=>{m=m.clone();m.metalness=0;m.roughness=.85;return m;});if(o.material.length===1)o.material=o.material[0];}});dressFarmer(model,variant);
  const mixer=new T.AnimationMixer(model),actions=new Map();for(const c of asset.animations){const name=c.name.split('|').pop().toLowerCase();if(['idle_neutral','walk','interact'].includes(name)){// Keep locomotion in place; world movement belongs to pathfinding.
  const clip=c.clone();clip.tracks=clip.tracks.filter(t=>!/^Root\.position$/.test(t.name));actions.set(name,mixer.clipAction(clip));}}
