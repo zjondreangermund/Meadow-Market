@@ -1,10 +1,10 @@
 import * as T from './three.module.js';
-import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js?v=farm7';
+import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js?v=world8';
 import {fitRig,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
-import {createJockey} from './jockey.js?v=farm7';
+import {createJockey} from './jockey.js?v=world8';
 import {racingPose} from './race-motion.js';
-import {safeRaceCamera,cameraClear} from './race-camera.js?v=farm7';
+import {safeRaceCamera,cameraClear} from './race-camera.js?v=world8';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
@@ -71,7 +71,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
  const raceDayVenue=addRaceDayVenue(scene,sample,mobile);
  const neon=new T.Group();neon.name='Skyline luminous racing rails';scene.add(neon);for(const [offset,color] of [[-2,'#61ebdc'],[13,'#bf8bfa']]){const curve=new T.CatmullRomCurve3(Array.from({length:128},(_,i)=>{const s=sample(i/128);return s.p.addScaledVector(s.normal,offset).add(new T.Vector3(0,.30,0));}),true);neon.add(new T.Mesh(new T.TubeGeometry(curve,256,.045,6,true),new T.MeshBasicMaterial({color})));}
  function setAtmosphere(mode){const night=mode==='Neon';neon.visible=night;sky.material.color.set(night?'#344665':'#ffffff');scene.fog.color.set(night?'#263a50':'#c4d3d0');sun.intensity=night?1.7:2.7;sun.color.set(night?'#cdd8ee':'#ffe0b4');ambient.intensity=night?.95:1.45;rim.intensity=night?1.9:.9;rim.color.set(night?'#77e7dc':'#9dc8f1');renderer.toneMappingExposure=night?1.23:1.13;}setAtmosphere('Neon');
- const staticObstacles=[];scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&o.geometry?.parameters?.radius!==490){let ancestor=o,inGate=false;while(ancestor){if(ancestor===gates)inGate=true;ancestor=ancestor.parent;}if(inGate)return;const b=new T.Box3().setFromObject(o);if(b.max.y>.8&&b.max.x-b.min.x<180&&b.max.z-b.min.z<180)staticObstacles.push(b);}});
+ const staticObstacles=[];scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh&&o.geometry?.parameters?.radius!==490){let ancestor=o,inGate=false;while(ancestor){if(ancestor===gates)inGate=true;ancestor=ancestor.parent;}if(inGate)return;const b=new T.Box3().setFromObject(o);if(b.max.y>.8&&b.max.x-b.min.x<180&&b.max.z-b.min.z<180)staticObstacles.push(b);}});
  // Full horse and humanoid assets are required before entry; no placeholder racers.
  const racers=[];
  function fallback(){return {g:new T.Group(),legs:[]};}
@@ -109,7 +109,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
    if(r.lead){r.lead.visible=parading;if(parading){const hand=r.jockey.userData.leadHand||r.root.localToWorld(new T.Vector3(.9,1.1,1)),end=r.root.localToWorld(bit.clone()),mid=hand.clone().lerp(end,.5);mid.y-=.25;const curve=new T.QuadraticBezierCurve3(hand,mid,end),p=r.lead.geometry.attributes.position;for(let k=0;k<33;k++){const v=curve.getPoint(k/32);p.setXYZ(k,v.x,v.y,v.z);}p.needsUpdate=true;}}
    if(r.bridle){const p=r.bridle.geometry.attributes.position;for(let k=0;k<33;k++){const a=k/32*Math.PI*2;p.setXYZ(k,bit.x+Math.cos(a)*.19,bit.y+Math.sin(a)*.14,bit.z-.08);}p.needsUpdate=true;}
   }
-  gates.visible=loading||phase==='countdown'||(active&&(race?.time||0)<1.2);for(let i=0;i<gateDoors.length;i++)gateDoors[i].position.x=active?-1.7:0;
+  gates.visible=loading||phase==='countdown';for(let i=0;i<gateDoors.length;i++)gateDoors[i].position.x=active?-1.7:0;
   flags.forEach((f,i)=>{f.rotation.y=Math.sin(elapsed*3+i)*.13;});
   for(let i=0;i<particles.length;i++){const p=particles[i];p.age+=dt;const r=racers[i%6],h=race?.runners[i%6];if(p.age>p.life){p.age=0;p.pos.copy(r.root.position);p.pos.y=.25;p.pos.x+=(Math.sin(i*7))*.5;p.pos.z+=Math.cos(i*9)*.5;}dummy.position.copy(p.pos);dummy.position.y+=p.age*.7;dummy.scale.setScalar(active&&h?.finish===null?.3+p.age*1.6:0);dummy.updateMatrix();dust.setMatrixAt(i,dummy.matrix);}dust.instanceMatrix.needsUpdate=true;
   if(winner){finishAge+=dt;confetti.visible=true;const s=sample(0,2.5);for(let i=0;i<160;i++){dummy.position.set(s.p.x+Math.sin(i*34)*14,12-((finishAge*(2+i%3)+i*.2)%13),s.p.z+Math.cos(i*51)*10);dummy.rotation.set(i+finishAge,i*.3,finishAge*2+i);dummy.scale.setScalar(1);dummy.updateMatrix();confetti.setMatrixAt(i,dummy.matrix);}confetti.instanceMatrix.needsUpdate=true;}else {finishAge=0;confetti.visible=false;}

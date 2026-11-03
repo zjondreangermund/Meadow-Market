@@ -24,3 +24,11 @@ GLB distribution mirror: https://github.com/nishit47/Blender-Pre-vis-Pipeline---
 Farmer.glb and Animated Woman.glb downloaded 2 November 2026.
 Original rigs and Idle_Neutral / Walk / Interact clips retained. Runtime materials adjusted for cloth; task props are original project art.
 CC0: https://creativecommons.org/publicdomain/zero/1.0/
+
+World expansion props (world8):
+Kenney CC0 1.0: barrel and feed bag (Food Kit), hay bale (Graveyard Kit), crate (Platformer Kit), tablecloth table (Furniture Kit), market hall (City Kit Suburban), apple (Food Kit).
+Original creator: https://kenney.nl/assets
+Source GLB distribution: https://github.com/Hidencod/tge-assets (catalog links the original creator; CC0 1.0).
+Lantern: Microsoft / sbtron (2017), CC0 1.0; Khronos glTF Sample Assets, Models/Lantern.
+https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Lantern
+Lantern embedded PBR maps reduced from 2048 to 1024 pixels for mobile; geometry unchanged. No assets were purchased. Kenney props are authored stylized low-poly assets, not photorealistic HD replacements.

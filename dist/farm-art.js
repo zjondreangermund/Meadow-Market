@@ -15,7 +15,7 @@ export function detailBuildings({worldBuildings,box,cyl,ball,mats}){
  for(const b of worldBuildings){let {g,w,d}=b;box(w+.25,.3,d+.25,'#8e8774',0,.3,0,g);const h=b.label==='THE RED BARN'?4.8:b.label==='FEED MILL'?2.5:2.2;
  for(const side of [-1,1]){let x=side*w*.34;box(.055,h*.23,.15,mats.white,x,h*.62,d/2+.18,g);box(w*.17,.045,.15,mats.white,x,h*.62,d/2+.18,g);box(.15,h*.23,.12,'#596a50',x-w*.12,h*.62,d/2+.1,g);box(.15,h*.23,.12,'#596a50',x+w*.12,h*.62,d/2+.1,g);box(w*.24,.18,.45,'#71543c',x,h*.42,d/2+.3,g);for(let k=0;k<4;k++){ball(.12,'#668748',x+(k-1.5)*.2,h*.46,d/2+.3,g);ball(.055,k%2?'#e9b678':'#e4c3af',x+(k-1.5)*.2,h*.5,d/2+.3,g);}}
  for(const side of [-1,1]){let brace=box(w*.26,.07,.08,mats.white,side*w*.075,h*.38,d/2+.18,g);brace.rotation.z=-side*.65;ball(.045,'#493b2d',side*.15,h*.45,d/2+.19,g);}
- box(w+.3,.12,.16,'#655b4b',0,h+.08,d/2+.2,g);box(.12,h,.12,'#655b4b',w/2+.12,h/2,d/2+.2,g);cyl(.45,.85,'#866344',-w/2-.6,.65,d/2-.5,g);for(const y of [.4,.85])cyl(.46,.045,'#535748',-w/2-.6,y,d/2-.5,g);
+ box(w+.3,.12,.16,'#655b4b',0,h+.08,d/2+.2,g);box(.12,h,.12,'#655b4b',w/2+.12,h/2,d/2+.2,g);
  let lantern=new T.Mesh(new T.BoxGeometry(.17,.24,.16),new T.MeshStandardMaterial({color:'#ffe5a0',emissive:'#edbd68',emissiveIntensity:.55}));lantern.position.set(w*.22,h*.7,d/2+.2);g.add(lantern);
  }
 }
@@ -29,8 +29,6 @@ export function landscapeFarm({scene,box,cyl,ball,mats,obstacles}){
  for(const side of [-1,1]){for(let i=0;i<30;i++){const z=-21+i*1.45;box(.14,.13,1.38,'#d9c69c',side*2.13,.23,z,group);}for(let i=0;i<32;i++){const x=-23+i*1.45;if(Math.abs(x)<2.4)continue;box(1.38,.13,.14,'#d9c69c',x,.23,6+side*1.85,group);}}
  // Fine joint lines and inlaid cobbles give the paths readable scale.
  for(let i=0;i<28;i++){const z=-20+i*1.5;for(let j=0;j<2;j++){const x=(j-.5)*1.8;box(1.68,.025,1.35,(i+j)%2?'#d8c39b':'#e4d0aa',x,.218,z,group);}}
- // Field-side seed station, little crates, sacks and a hand trolley.
- const x=-11,z=9.3;box(2.2,.12,.65,'#99734a',x,1.1,z,group);for(const side of [-1,1])box(.09,1.05,.5,'#70573d',x+side*.9,.57,z,group);for(let i=0;i<3;i++){box(.38,.48,.12,['#7d9861','#bc955e','#d4ba7c'][i],x+(i-1)*.55,1.4,z,group);box(.21,.2,.012,'#f4e5b8',x+(i-1)*.55,1.4,z+.067,group);}for(let i=0;i<3;i++){const xx=-14.3+i*.65;box(.55,.1,.55,'#ae8554',xx,.27,17,group);for(const s of [-1,1]){box(.55,.35,.04,'#bd9868',xx,.47,17+s*.27,group);box(.04,.35,.55,'#bd9868',xx+s*.27,.47,17,group);}}
  // Short warm lamps and flowers in the safe verge, away from the crop bounds.
  for(const [x,z]of [[-3.1,-18],[3.1,-6],[-3.1,8],[3.1,18]]){cyl(.07,1.3,'#6a7256',x,.87,z,group);box(.3,.35,.3,'#f3daa0',x,1.62,z,group);box(.42,.06,.42,'#6a7256',x,1.83,z,group);}
  const petals=new T.InstancedMesh(new T.SphereGeometry(.06,6,4),new T.MeshStandardMaterial({color:'#f4da9e',roughness:.9}),180),d=new T.Object3D();for(let i=0;i<180;i++){const side=i%2?1:-1,x=side*(24.7+(i%3)*.25),z=-18+(i/180)*38;d.position.set(x,.4+Math.sin(i)*.06,z);d.scale.set(1,.6,1);d.updateMatrix();petals.setMatrixAt(i,d.matrix);petals.setColorAt(i,new T.Color(['#f3ce7d','#e8a78e','#f2e7c4'][i%3]));}group.add(petals);

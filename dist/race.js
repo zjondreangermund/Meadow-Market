@@ -1,8 +1,8 @@
 import {horsesFor} from './horses.js';
 import {fresh} from './economy.js';
 import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js';
-import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=farm7';
-import {createRaceScene,SILKS} from './race-scene.js?v=farm7';
+import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=world8';
+import {createRaceScene,SILKS} from './race-scene.js?v=world8';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
