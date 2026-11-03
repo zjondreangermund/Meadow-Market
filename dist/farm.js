@@ -1,4 +1,4 @@
-import {mobileDevice,graphicsProfile} from './graphics-profile.js?v=riders7';
+import {mobileDevice,graphicsProfile} from './graphics-profile.js?v=track8';
 const phoneGraphics=mobileDevice();
 import * as T from './three.module.js';
 import {detailTexture} from './race-day.js?v=raceday6';
@@ -10,7 +10,7 @@ import {loadFarmer} from './farmer-rig.js?v=world8';
 import {plantMaize,detailBuildings,softBuildingBox,orchardTree,landscapeFarm} from './farm-art.js?v=world8';
 import {horsesFor,trainHorse,restHorses,simulateRace} from './horses.js';
 import {buildStable} from './stable.js';
-import {upgradeAnimals,setAnimalMotion,animateRigDetails} from './animal-assets.js?v=riders7';
+import {upgradeAnimals,setAnimalMotion,animateRigDetails} from './animal-assets.js?v=track8';
 import {applyChickenFeathers,applyAnimalCoat,COATS,horseCoatId} from './coat-variants.js?v=visual4';
 import {GOODS,RATIONS,HERDS,fresh,demand,fill,collectWell,harvest,mill,advance,trade} from './economy.js?v=world8';
 const scene=new T.Scene();scene.background=new T.Color('#b8d5dc');scene.fog=new T.Fog('#b8d5dc',65,120);const camera=new T.PerspectiveCamera(40,innerWidth/innerHeight,.1,200);let renderer;try{renderer=new T.WebGLRenderer({antialias:true});}catch(e){document.querySelector('#loading').textContent='3D requires WebGL. Please open this page in Chrome with hardware acceleration enabled.';throw e}renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(graphicsProfile().pixelRatio);renderer.shadowMap.enabled=graphicsProfile().shadows;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;document.body.prepend(renderer.domElement);scene.add(new T.HemisphereLight(0xfff7da,0x667f4a,1.65));const sun=new T.DirectionalLight(0xfff0cf,2.4);sun.position.set(-18,35,15);sun.castShadow=true;sun.shadow.mapSize.set(graphicsProfile().shadowSize,graphicsProfile().shadowSize);Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40,far:100});sun.shadow.bias=-.0008;scene.add(sun);const fillLight=new T.DirectionalLight('#b1d7e6',.65);fillLight.position.set(20,18,-20);scene.add(fillLight);
@@ -108,11 +108,11 @@ function modelReport(type,ok,report){
  const group=animals.filter(a=>a.type===type),hd=group.filter(a=>a.hd).length,native=group.filter(a=>a.nativeRig).length;
  loadReport[type]={hd,native,total:group.length,items:group.map(a=>({name:a.g.userData.name||type,hd:!!a.hd,nativeRig:!!a.nativeRig,error:a.hdError||null}))};
  const label=document.querySelector('#asset-quality');
- if(label)label.textContent='Visual v7 · '+['horse','cow','pig','chicken'].map(k=>k+': '+(loadReport[k]?(loadReport[k].native===loadReport[k].total?loadReport[k].native+'/'+loadReport[k].total+' animated':loadReport[k].hd+'/'+loadReport[k].total+' HD'):'loading')).join(' | ')+' · Details';
+ if(label)label.textContent='Visual v8 · '+['horse','cow','pig','chicken'].map(k=>k+': '+(loadReport[k]?(loadReport[k].native===loadReport[k].total?loadReport[k].native+'/'+loadReport[k].total+' animated':loadReport[k].hd+'/'+loadReport[k].total+' HD'):'loading')).join(' | ')+' · Details';
  if(ok)for(const a of group)a.model?.traverse(o=>{if(o.isMesh){o.userData.animal=a.g;if(!clickables.includes(o))clickables.push(o);}});
 }
 const modelText=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-window.showModelStatus=()=>modal('<h2>3D model status · Visual v7</h2>'+['horse','cow','pig','chicken'].map(type=>'<h3>'+type+'</h3>'+(loadReport[type]?.items.map(a=>'<p><b>'+modelText(a.name)+'</b>: '+(a.nativeRig?'Original animated model · compatibility workaround':a.hd?'HD loaded':'Original model · '+modelText(a.error||'Loading'))+'</p>').join('')||'<p>Loading</p>')).join('')+'<button onclick="retryHDModels()">Retry missing HD models</button><p>Retries only models. Your farm progress and horse statistics stay unchanged.</p>');
+window.showModelStatus=()=>modal('<h2>3D model status · Visual v8</h2>'+['horse','cow','pig','chicken'].map(type=>'<h3>'+type+'</h3>'+(loadReport[type]?.items.map(a=>'<p><b>'+modelText(a.name)+'</b>: '+(a.nativeRig?'Original animated model · compatibility workaround':a.hd?'HD loaded':'Original model · '+modelText(a.error||'Loading'))+'</p>').join('')||'<p>Loading</p>')).join('')+'<button onclick="retryHDModels()">Retry missing HD models</button><p>Retries only models. Your farm progress and horse statistics stay unchanged.</p>');
 let retryingHD=false;
 window.retryHDModels=async()=>{if(retryingHD)return;retryingHD=true;document.querySelector('dialog').close();toast('Retrying missing HD models…');try{await upgradeAnimals(animals.filter(a=>!a.hd&&!a.nativeRig),modelReport);}finally{retryingHD=false;window.showModelStatus();}};
 upgradeAnimals(animals,modelReport);

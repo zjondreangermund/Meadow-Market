@@ -1,17 +1,17 @@
-import {mobileDevice} from './graphics-profile.js?v=riders7';
+import {mobileDevice} from './graphics-profile.js?v=track8';
 const phoneGraphics=mobileDevice();
 import {horsesFor} from './horses.js';
 import {horseCoatId} from './coat-variants.js?v=visual4';
 import {fresh} from './economy.js';
-import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js?v=riders7';
+import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js?v=track8';
 import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=world8';
-import {createRaceScene,SILKS} from './race-scene.js?v=riders7';
+import {createRaceScene,SILKS} from './race-scene.js?v=track8';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
 const horses=horsesFor(save);let selected=horses.find(h=>h.id===new URLSearchParams(location.search).get('horse'))||horses[0],metres=800,plan='stalker';const eventSeed=crypto.getRandomValues(new Uint32Array(1))[0];const track=eventSeed%3===0?'soft':'firm';
 let jockeyId='stable',bookingDone=false;
-let phase='lobby',race=null,command={pace:'cruise',lane:0,burst:false},inputs=[],currentRun=null,lastRun=null,paused=false,accumulator=0,countdown=0,finishWait=0,announcementUntil=0,uiClock=0,lastPosition=1,finalCalled=false,slowmo=0,replayAt=0,replaySpeed=1,camIndex=1,dayClock=0,previewOpen=false;
+let phase='lobby',race=null,command={pace:'cruise',lane:0,burst:false},inputs=[],currentRun=null,lastRun=null,paused=false,accumulator=0,countdown=0,finishWait=0,announcementUntil=0,uiClock=0,lastPosition=1,finalCalled=false,slowmo=0,replayAt=0,replaySpeed=1,camIndex=0,dayClock=0,previewOpen=false;
 let soundEnabled=false,audio=null,noise=null,lastHoof=0;
 const cams=['Director','Chase','Rail','Broadcast'];
 function latestFarm(){try{const s=JSON.parse(localStorage.getItem('meadow-cycle-v2'));if(s?.version===2)return s;}catch{}return save;}

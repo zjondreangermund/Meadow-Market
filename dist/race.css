@@ -17,3 +17,5 @@
 
 /* Neon broadcast accents contrast with the warm farm palette. */
 :root{--gold:#8be5d6;--purple:#bba0fb}.head-tools button{border-radius:4px}.race-top .glass,.telemetry,.race-controls,.leaderboard{border-color:#8be5d633;background:linear-gradient(130deg,#132b37ee,#101b2ded)}.wordmark i{color:#8be5d6}.start{background:#8be5d6;color:#112f37}.start:hover{background:#b1fff0}.selected{border-color:#8be5d6!important;background:#8be5d618!important;color:#8be5d6!important}.burst{background:linear-gradient(110deg,#385c78,#8e63a7)}@media(max-width:750px){.head-tools{max-width:215px}.head-tools button{font-size:7px;padding:5px}.wordmark{font-size:10px}}
+
+#camera{min-height:36px;min-width:112px;touch-action:manipulation}#zoom-in,#zoom-out{min-width:36px;min-height:36px;touch-action:manipulation}

@@ -17,3 +17,18 @@ world.update(.016,null,'lobby');const paradeStart=world.racers[0].root.position.
 const finalRace=createRace({speed:75,power:75,stamina:75,energy:100,condition:80},400,8);while(!finalRace.done)stepRace(finalRace,{});const results=finalRace.runners.map(r=>({distance:r.distance,finish:r.finish}));world.update(1/60,finalRace,'race');const linePos=world.racers[0].root.position.clone();for(let i=0;i<180;i++)world.update(1/60,finalRace,'race');assert.ok(linePos.distanceTo(world.racers[0].root.position)>20,'finished horse runs beyond wire');assert.ok(world.racers[0].action.isRunning(),'gallop continues beyond wire');assert.deepEqual(finalRace.runners.map(r=>({distance:r.distance,finish:r.finish})),results,'runout never changes result');for(const r of world.racers){assert.equal(r.jockey.userData.onFoot,false);assert.equal(r.lead.visible,false);}console.log('PASS: grounded walking parade with lead ropes, orbit tour, galloping run-through and immutable finish times.');
 
 const cameraRace=createRace({speed:75,power:75,stamina:75,energy:100,condition:80},800,8);world.cameraMode('Rail');for(let i=0;i<64;i++){for(let j=0;j<6;j++)cameraRace.runners[j].distance=i/64*400+j*28;world.update(.1,cameraRace,'race');assert.ok(world.cameraState().position.y<8,'crowd instance bounds must not force a sky camera');}console.log('PASS: rail camera stays beside track through a full lap, rather than colliding with a stadium-wide crowd AABB.');
+
+// Regression from phone video: manual selection used to be overwritten by
+// the parade orbit even though the UI said Chase/Rail/Broadcast.
+for(const phase of ['lobby','parade','countdown','race','replay','finish']){
+ const views=[];
+ for(const mode of ['Chase','Rail','Broadcast']){
+  world.cameraMode(mode);world.update(1/30,cameraRace,phase);
+  const shot=world.cameraState();assert.equal(shot.mode,mode);views.push(shot.position);
+ }
+ assert.ok(views[0].distanceTo(views[1])>2,'Chase and Rail differ during '+phase);
+ assert.ok(views[2].y>views[0].y+4,'Broadcast remains elevated during '+phase);
+}
+let signs=0,shadow=false;world.scene.traverse(o=>{if(o.name==='Readable two-sided sign'){assert.equal(o.children.length,2);assert.equal(o.children[0].material.side,T.FrontSide);assert.equal(o.children[1].rotation.y,Math.PI);signs++;}if(o.name==='Soft horse ground contact')shadow=o.count===6;});
+assert.ok(signs>5,'venue signs readable on both sides');assert.ok(shadow,'lightweight contact shadows for every horse');
+console.log('PASS: visibly different camera positions through parade/gates/race/replay/finish, two-sided readable signage and six ground-contact shadows. GPU pixels unverified.');

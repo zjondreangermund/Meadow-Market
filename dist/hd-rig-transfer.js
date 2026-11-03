@@ -1,5 +1,5 @@
 import * as T from './three.module.js';
-import {skinSurface} from './surface-skinning.js?v=riders7';
+import {skinSurface} from './surface-skinning.js?v=track8';
 
 // Attach a genuinely different, higher-density authored 3D mesh to an EXISTING
 // quadruped skeleton. The animation clips, bones and game state remain unchanged.

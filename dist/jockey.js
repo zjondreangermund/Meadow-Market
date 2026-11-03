@@ -7,7 +7,7 @@ import {detailTexture} from './race-day.js';
 import {mountedMotion} from './mounted-motion.js';
 import {applyRaceSilks} from './garment-materials.js';
 import {prepareHumanSurfaces} from './human-surfaces.js';
-import {riderLook,athleticBuild} from './rider-appearance.js?v=riders7';
+import {riderLook,athleticBuild} from './rider-appearance.js?v=track8';
 const humanAssets=new Map();
 const v=(x,y,z)=>new T.Vector3(x,y,z),clamp=T.MathUtils.clamp;
 // Retain the authored humanoid topology, face, hands, clothing and skeleton.
@@ -56,7 +56,7 @@ export function createJockey(color,number=1,variant='man',lookNumber=number){
   const point=p=>root.localToWorld(p.clone());
   let motionBlend=0;
   root.userData.update=(time,gait,control={})=>{
-   if(root.userData.onFoot){for(const s of saved){s.b.quaternion.copy(s.q);s.b.position.copy(s.p);}model.position.copy(standingBase);if(walkAction&&!walkAction.isRunning())walkAction.reset().play();walkMixer.update(control.delta??.016);root.updateMatrixWorld(true);const arm=bones.UpperArmR;if(arm)rotateWorld(arm,v(1,0,0).applyQuaternion(root.getWorldQuaternion(new T.Quaternion())),-.55);const hand=bones.WristR;if(hand)root.userData.leadHand=hand.getWorldPosition(new T.Vector3());model.updateMatrixWorld(true);return;}if(walkAction?.isRunning())walkAction.stop();
+   if(root.userData.onFoot){for(const s of saved){s.b.quaternion.copy(s.q);s.b.position.copy(s.p);}model.position.copy(standingBase);if(walkAction&&!walkAction.isRunning())walkAction.reset().play();walkMixer.update(control.delta??.016);root.updateMatrixWorld(true);solve(bones.UpperArmR,bones.LowerArmR,bones.WristR,point(v(-.28,1.12,.42)),point(v(-.48,1.35,.10)));const hand=bones.WristR;if(hand)root.userData.leadHand=hand.getWorldPosition(new T.Vector3());model.updateMatrixWorld(true);return;}if(walkAction?.isRunning())walkAction.stop();
    const steer=clamp(typeof control==='number'?control:control.steer||0,-1,1),bank=typeof control==='number'?0:control.bank||0;
    motionBlend=T.MathUtils.lerp(motionBlend,gait>.05?1:0,1-Math.exp(-(control.delta??1)*12));const cycle=mountedMotion(control.phase||0,control.effort??.5,true),rest=mountedMotion(0,.5,false);for(const key of Object.keys(cycle))cycle[key]=T.MathUtils.lerp(rest[key],cycle[key],motionBlend);model.position.copy(modelBase);model.position.y+=cycle.hip;
    for(const s of saved){s.b.quaternion.copy(s.q);s.b.position.copy(s.p);}

@@ -4,9 +4,9 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {animateNativeHen} from './native-hen.js?v=riders7';
-import {applyAnimalCoat} from './coat-variants.js?v=riders7';
-import {enhanceAnimalRig,loadWithDeadline} from './hd-animal-pack.js?v=riders7';
+import {animateNativeHen} from './native-hen.js?v=track8';
+import {applyAnimalCoat} from './coat-variants.js?v=track8';
+import {enhanceAnimalRig,loadWithDeadline} from './hd-animal-pack.js?v=track8';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
 function withDeadline(promise){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Animated model loading timed out')),15000);})]).finally(()=>clearTimeout(timer));}
