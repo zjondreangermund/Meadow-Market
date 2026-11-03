@@ -26,7 +26,7 @@ export async function upgradeAnimals(animals,onStatus){
      a.model=hen.model;a.animateBird=hen.animate;a.hd=true;
     }catch(e){console.warn('Using existing animated hen fallback:',e.message);}
    }
-   onStatus?.('chicken',true);
+   onStatus?.('chicken',true,{hd:animals.filter(a=>a.type==='chicken').filter(a=>a.hd).length,total:animals.filter(a=>a.type==='chicken').length});
    return;
   }
   try{
@@ -58,7 +58,7 @@ export async function upgradeAnimals(animals,onStatus){
     });});
     a.currentAction=null;setAnimalMotion(a,'idle',0);
    }
-   onStatus?.(type,true);
+   onStatus?.(type,true,{hd:animals.filter(a=>a.type===type).filter(a=>a.hd).length,total:animals.filter(a=>a.type===type).length});
   }catch(e){console.warn('Existing animal rig could not load:',type,e);onStatus?.(type,false);}
  }));
 }
