@@ -4,7 +4,7 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat} from './coat-variants.js';
+import {applyAnimalCoat} from './coat-variants.js?v=visual4';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
 async function source(type){if(!cache.has(type))cache.set(type,type==='pig'?new FBXLoader().loadAsync(sources[type]).then(m=>({scene:m,animations:m.animations})):new GLTFLoader().loadAsync(sources[type]));return cache.get(type)}
