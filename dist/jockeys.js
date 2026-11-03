@@ -1,9 +1,9 @@
 // Fictional local-game riders. Fees use non-withdrawable farm coins, never money.
 export const JOCKEYS=[
  {id:'stable',name:'Stable Rider',title:'Your dependable starter',price:0,starts:0,line:50,care:50,finish:50,color:'#edc16f'},
- {id:'mara',name:'Mara Veld',title:'The Metronome',price:120,starts:3,line:76,care:90,finish:68,color:'#5eaa9a'},
- {id:'kai',name:'Kai Storm',title:'The Finisher',price:180,starts:3,line:70,care:62,finish:94,color:'#b674a4'},
- {id:'tala',name:'Tala Dune',title:'The Line Finder',price:200,starts:3,line:94,care:74,finish:80,color:'#7199c4'}
+ {id:'mara',variant:'lady',look:2,name:'Mara Veld',title:'The Metronome',price:120,starts:3,line:76,care:90,finish:68,color:'#5eaa9a'},
+ {id:'kai',variant:'man',look:3,name:'Kai Storm',title:'The Finisher',price:180,starts:3,line:70,care:62,finish:94,color:'#b674a4'},
+ {id:'tala',variant:'lady',look:4,name:'Tala Dune',title:'The Line Finder',price:200,starts:3,line:94,care:74,finish:80,color:'#7199c4'}
 ];
 export const jockeyById=id=>JOCKEYS.find(j=>j.id===id)||JOCKEYS[0];
 export function rosterFor(s){if(!s.jockeyRoster||typeof s.jockeyRoster!=='object')s.jockeyRoster={};return s.jockeyRoster;}

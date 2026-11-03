@@ -2,21 +2,22 @@ import * as T from './three.module.js';
 import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js?v=world8';
 import {fitRig,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
-import {createJockey} from './jockey.js?v=world8';
+import {createJockey} from './jockey.js?v=riders7';
+import {mobileDevice,graphicsProfile} from './graphics-profile.js?v=riders7';
 import {racingPose} from './race-motion.js';
 import {safeRaceCamera,cameraClear} from './race-camera.js?v=world8';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=visual62';
-import {enhanceAnimalRig} from './hd-animal-pack.js?v=visual62';
+import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=riders7';
+import {enhanceAnimalRig} from './hd-animal-pack.js?v=riders7';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const mobile=innerWidth<750;
+const mobile=mobileDevice();
 export function createRaceScene(container){
- const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;container.append(renderer.domElement);
+ const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(graphicsProfile().pixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=graphicsProfile().shadows;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;container.append(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#adc7cb');scene.fog=new T.Fog('#c4d3d0',240,480);
  const camera=new T.PerspectiveCamera(48,innerWidth/innerHeight,.1,650);camera.position.set(110,60,120);
- const ambient=new T.HemisphereLight('#d9efff','#536545',1.45);scene.add(ambient);const sun=new T.DirectionalLight('#ffe0b4',2.7);sun.position.set(-70,110,65);sun.castShadow=true;sun.shadow.normalBias=.025;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:160});sun.shadow.bias=-.0007;scene.add(sun,sun.target);const rim=new T.DirectionalLight('#9dc8f1',.9);rim.position.set(65,35,-70);scene.add(rim);
+ const ambient=new T.HemisphereLight('#d9efff','#536545',1.45);scene.add(ambient);const sun=new T.DirectionalLight('#ffe0b4',2.7);sun.position.set(-70,110,65);sun.castShadow=true;sun.shadow.normalBias=.025;sun.shadow.mapSize.set(graphicsProfile().shadowSize,graphicsProfile().shadowSize);Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32,near:1,far:160});sun.shadow.bias=-.0007;scene.add(sun,sun.target);const rim=new T.DirectionalLight('#9dc8f1',.9);rim.position.set(65,35,-70);scene.add(rim);
  const coatDetail=detailTexture('coat',1024),silkDetail=detailTexture('silk',512);coatDetail.repeat.set(3,3);const maxAnisotropy=renderer.capabilities?.getMaxAnisotropy?.()||4;coatDetail.anisotropy=Math.min(8,maxAnisotropy);
  const ramp=new T.DataTexture(new Uint8Array([95,95,95,255,165,165,165,255,255,255,255,255]),3,1,T.RGBAFormat);ramp.minFilter=T.NearestFilter;ramp.magFilter=T.NearestFilter;ramp.needsUpdate=true;
  const materials=new Map(),geom={box:new T.BoxGeometry(1,1,1),sphere:new T.SphereGeometry(1,24,16),cylinder:new T.CylinderGeometry(1,1,1,10)};
@@ -45,7 +46,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
  let eventSign=textPlane('SKYLINE CUP',30,7);eventSign.position.set(10,9,-5);eventSign.rotation.y=.2;for(const x of [-5,25])box('#4f4c62',x,4,-5,.55,8,.55);
  // Grandstands: terraced structure, colourful 3D spectators and a canopy.
  const crowdGeo=new T.CylinderGeometry(.19,.24,.62,8),crowdMat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:ramp});
- const count=mobile?600:1100,crowd=new T.InstancedMesh(crowdGeo,crowdMat,count);crowd.castShadow=false;const heads=new T.InstancedMesh(new T.SphereGeometry(.17,8,6),new T.MeshStandardMaterial({color:'#cfa786',roughness:.9}),count);const dummy=new T.Object3D();let ci=0;
+ const count=mobile?240:1100,crowd=new T.InstancedMesh(crowdGeo,crowdMat,count);crowd.castShadow=false;const heads=new T.InstancedMesh(new T.SphereGeometry(.17,8,6),new T.MeshStandardMaterial({color:'#cfa786',roughness:.9}),count);const dummy=new T.Object3D();let ci=0;
  for(let side of [-1,1]){
   const stand=new T.Group();stand.position.set(0,0,side*76);if(side===-1)stand.rotation.y=Math.PI;scene.add(stand);
   for(let row=0;row<6;row++)box(row%2?'#6e6585':'#817391',0,1.2+row*.75,row*1.8,135,2,1.8,stand);
@@ -103,7 +104,12 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
    for(const r of racers){const b=skinBounds(r.model);if(b.max.y-b.min.y<1.9)throw Error('Horse rig failed visible-size validation.');}for(const r of racers)r.root.visible=true;loaded=true;return true;
  }).catch(e=>{console.warn('Race assets unavailable; racing remains disabled.',e);return false;});
  function setHorseProfile(profile){if(!profile?.id)return;const model=racers[0].model;if(model)applyAnimalCoat(model,'horse',profile.id,horseCoatId(profile));}
-  function setJockey(profile){racers[0].jockey.userData.setSilks?.(profile.color);racers[0].jockey.userData.riderName=profile.name;}
+ const playerRiders=new Map([[playerAvatar+':1',racers[0].jockey]]);
+ function setJockey(profile){const r=racers[0],variant=profile.variant||playerAvatar,lookNumber=profile.look||1,key=variant+':'+lookNumber;
+ if(r.jockey.userData.avatarVariant!==variant||r.jockey.userData.lookNumber!==lookNumber){const old=r.jockey;let next=playerRiders.get(key);if(!next){next=createJockey(profile.color,1,variant,lookNumber);playerRiders.set(key,next);}next.position.copy(old.position);next.rotation.copy(old.rotation);next.userData.setOnFoot(old.userData.onFoot);r.root.remove(old);r.root.add(next);r.jockey=next;}
+ const chosen=r.jockey;chosen.userData.setSilks?.(profile.color);chosen.userData.riderName=profile.name;
+ return chosen.userData.ready.then(()=>{chosen.userData.setSilks?.(profile.color);return true;});
+ }
  function cameraMode(mode){if(['Director','Chase','Rail','Broadcast'].includes(mode))camMode=mode;first=true;}
  function zoom(delta){zoomFactor=T.MathUtils.clamp(zoomFactor*Math.exp(delta),.55,1.9);return zoomFactor;}
  const cameraTouches=new Map();let pinchDistance=0;const lens=renderer.domElement;if(lens.style)lens.style.touchAction='none';lens.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY*.001);},{passive:false});lens.addEventListener('pointerdown',e=>{cameraTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});lens.setPointerCapture?.(e.pointerId);if(cameraTouches.size===2){const p=[...cameraTouches.values()];pinchDistance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});lens.addEventListener('pointermove',e=>{if(!cameraTouches.has(e.pointerId))return;cameraTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(cameraTouches.size===2){const p=[...cameraTouches.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(d>8&&pinchDistance>8)zoom(Math.log(pinchDistance/d));pinchDistance=d;}});for(const event of ['pointerup','pointercancel'])lens.addEventListener(event,e=>{cameraTouches.delete(e.pointerId);pinchDistance=0;});
@@ -143,7 +149,7 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
   const targetFov=user?.burst>0&&!reduced?58:48;camera.fov=T.MathUtils.lerp(camera.fov,targetFov,Math.min(1,dt*3));camera.updateProjectionMatrix();renderer.render(scene,camera);
  }
  function loadingDistanceForCamera(){return -Math.max(0,38-(previousRace?.presentationTime||0)*5.5);}
- function quality(level){const high=level==='High';renderer.setPixelRatio(Math.min(devicePixelRatio,high?2:1));renderer.shadowMap.enabled=high;sun.shadow.mapSize.set(high?2048:1024,high?2048:1024);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.setSize(innerWidth,innerHeight);}
+ function quality(level){const profile=graphicsProfile(level==='High');renderer.setPixelRatio(profile.pixelRatio);renderer.shadowMap.enabled=profile.shadows;sun.shadow.mapSize.set(profile.shadowSize,profile.shadowSize);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.setSize(innerWidth,innerHeight);}
  function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener('resize',resize);
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();window.dispatchEvent(new Event('racecontextlost'));});renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
  return {ready,update,setAtmosphere,setPreview,cameraMode,setJockey,setHorseProfile,zoom,cameraState:()=>({mode:camMode,zoom:zoomFactor,position:camera.position.clone()}),quality,renderer,scene,racers,sample,loaded:()=>loaded};

@@ -1,6 +1,6 @@
 import * as T from './three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual62';
+import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=riders7';
 
 // Commercial-use CC0 meshes, source-controlled by immutable CDN asset IDs.
 // These files add substantially more sculpted anatomy than the old game rigs.

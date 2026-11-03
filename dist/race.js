@@ -1,9 +1,11 @@
+import {mobileDevice} from './graphics-profile.js?v=riders7';
+const phoneGraphics=mobileDevice();
 import {horsesFor} from './horses.js';
 import {horseCoatId} from './coat-variants.js?v=visual4';
 import {fresh} from './economy.js';
-import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js';
+import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js?v=riders7';
 import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=world8';
-import {createRaceScene,SILKS} from './race-scene.js?v=visual62';
+import {createRaceScene,SILKS} from './race-scene.js?v=riders7';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
@@ -36,6 +38,7 @@ function tone(hz,duration=.08,volume=.04,type='sine'){if(!soundEnabled||!audio)r
 function activateAudio(){if(audio){audio.resume();return;}const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;try{audio=new AC();const buf=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),data=buf.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1);const src=audio.createBufferSource();src.buffer=buf;src.loop=true;const filter=audio.createBiquadFilter();filter.type='bandpass';filter.frequency.value=650;const gain=audio.createGain();gain.gain.value=soundEnabled?.028:0;src.connect(filter);filter.connect(gain);gain.connect(audio.destination);src.start();noise=gain;}catch{soundEnabled=false;}}
 $('#sound').onclick=()=>{soundEnabled=!soundEnabled;activateAudio();$('#sound').textContent=soundEnabled?'Sound on':'Sound off';$('#sound').setAttribute('aria-pressed',String(soundEnabled));if(noise)noise.gain.value=soundEnabled?.028:0;};
 $('#atmosphere').onclick=()=>{const next=$('#atmosphere').textContent.includes('Neon')?'Day':'Neon';$('#atmosphere').textContent='Scene: '+next;world?.setAtmosphere?.(next);};
+$('#quality').textContent='Visuals: '+(phoneGraphics?'Performance':'High');
 $('#quality').onclick=()=>{const next=$('#quality').textContent.includes('High')?'Performance':'High';$('#quality').textContent='Visuals: '+next;world?.quality?.(next);};
 $('#field').onclick=()=>{const compact=$('#leaderboard').classList.toggle('compact');$('#field').textContent=compact?'Field +':'Field −';};
 $('#zoom-in').onclick=()=>world?.zoom?.(-.15);$('#zoom-out').onclick=()=>world?.zoom?.(.15);
@@ -89,7 +92,7 @@ function updateHUD(){if(!race)return;const h=race.runners[0],order=raceOrder(rac
  }
 }
 let last=performance.now(),lastCount=-1;
-function frame(now){requestAnimationFrame(frame);const dt=Math.min(.1,(now-last)/1000);last=now;if(!world)return;
+function frame(now){requestAnimationFrame(frame);if(document.hidden){last=now;return;}if(phoneGraphics&&now-last<1000/30-1)return;const dt=Math.min(.1,(now-last)/1000);last=now;if(!world)return;
  if(!paused){
   if(phase==='parade'||phase==='gatewalk'){dayClock+=dt;show('#race-day',true);$('#day-stage').textContent=phase==='parade'?'01 / THE PARADE RING':'02 / TO THE STARTING GATES';$('#day-title').textContent=phase==='parade'?'Meet your contenders.':'Taking their places.';$('#day-caption').textContent=phase==='parade'?jockeyById(jockeyId).name+' leads '+selected.name+' · '+metres+'m Skyline Cup':'Jockeys mount up. The field walks forward under the starter’s orders.';$('#day-progress').value=phase==='parade'?dayClock/18:dayClock/8;race.presentationTime=phase==='gatewalk'?dayClock:0;if(phase==='parade'&&dayClock>=18){phase='gatewalk';dayClock=0;announce('RIDERS UP • TO THE START',2);}else if(phase==='gatewalk'&&dayClock>=8)enterGates();}
   if(phase==='countdown'){

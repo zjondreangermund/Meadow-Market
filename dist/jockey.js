@@ -7,11 +7,12 @@ import {detailTexture} from './race-day.js';
 import {mountedMotion} from './mounted-motion.js';
 import {applyRaceSilks} from './garment-materials.js';
 import {prepareHumanSurfaces} from './human-surfaces.js';
+import {riderLook,athleticBuild} from './rider-appearance.js?v=riders7';
 const humanAssets=new Map();
 const v=(x,y,z)=>new T.Vector3(x,y,z),clamp=T.MathUtils.clamp;
 // Retain the authored humanoid topology, face, hands, clothing and skeleton.
 // Riding uses two-bone IK, rather than assembling a person from primitives.
-export function createJockey(color,number=1,variant='man'){
+export function createJockey(color,number=1,variant='man',lookNumber=number){
  const root=new T.Group();root.name='Rigged race jockey '+number;
  const leather=new T.MeshStandardMaterial({color:'#352720',roughness:.74}),metal=new T.MeshStandardMaterial({color:'#a69c84',metalness:.7,roughness:.28});
  function prop(geo,mat,x,y,z,sx=1,sy=1,sz=1){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;root.add(m);return m;}
@@ -26,8 +27,8 @@ export function createJockey(color,number=1,variant='man'){
  const file=variant==='lady'?'farmer-woman.glb':'farmer.glb';
   if(!humanAssets.has(file))humanAssets.set(file,new GLTFLoader().loadAsync('./models/'+file).catch(e=>{humanAssets.delete(file);throw e;}));
   const ready=humanAssets.get(file).then(asset=>{
-  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});prepareHumanSurfaces(model);root.add(model);root.userData.model=model;
-  model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants|Woman_Pants|Pants|Trousers/i.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet|Woman_Feet|Feet|Boots/i.test(o.name))m.color.set('#252329');else if(/Farmer_Body|Woman_Body|Torso|Shirt|Jacket/i.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige'){m.userData.teamSilk=true;m.roughness=.43;m.bumpMap=detailTexture('silk');m.bumpScale=.008;}}}});applyRaceSilks(model,clothMat,color,number);
+  const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.68});prepareHumanSurfaces(model);const appearance=riderLook(lookNumber);athleticBuild(model,appearance.build);root.add(model);root.userData.model=model;
+  model.traverse(o=>{if(!o.isMesh)return;if(/Head/i.test(o.name)&&/^(Beige|Hair_Blond)$/i.test(o.material?.name||''))o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/^Skin$/i.test(m.name))m.color.set(appearance.skin);if(/Hair|Eyebrows/i.test(m.name))m.color.set(appearance.hair);if(/Farmer_Pants|Woman_Pants|Pants|Trousers|Casual_Legs/i.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet|Woman_Feet|Feet|Boots|Casual_Feet/i.test(o.name))m.color.set('#252329');else if(/Farmer_Body|Woman_Body|Torso|Shirt|Jacket|Casual_Body/i.test(o.name)&&m.name!=='Skin'){m.color.set(m.name==='Beige'?'#ece3d0':color);if(m.name!=='Beige'){m.userData.teamSilk=true;m.roughness=.43;m.bumpMap=detailTexture('silk');m.bumpScale=.008;}}}});applyRaceSilks(model,clothMat,color,number);
   const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
   const standingBase=model.position.clone(),walkMixer=new T.AnimationMixer(model);const walkClip=asset.animations.find(a=>/walk$/i.test(a.name));const walkAction=walkClip?walkMixer.clipAction(walkClip.clone()):null;if(walkAction)walkAction.getClip().tracks=walkAction.getClip().tracks.filter(t=>!/^Root\.position$/.test(t.name));let modelBase;
   const saved=Object.values(bones).map(b=>({b,q:b.quaternion.clone(),p:b.position.clone()}));
@@ -35,10 +36,19 @@ export function createJockey(color,number=1,variant='man'){
   const hp=root.worldToLocal(hips.getWorldPosition(new T.Vector3()));model.position.add(v(0,1.99,-.12).sub(hp));modelBase=model.position.clone();root.updateMatrixWorld(true);
   // The helmet follows the actual head bone; hide only the original straw hat.
   const head=bones.Head,headPoint=root.worldToLocal(head.getWorldPosition(new T.Vector3()));
-  const helmet=prop(new T.SphereGeometry(1,28,16,0,Math.PI*2,0,Math.PI*.55),clothMat,headPoint.x,headPoint.y+.31,headPoint.z,.235,.21,.24);
-  const brim=prop(new T.SphereGeometry(1,20,8),leather,headPoint.x,headPoint.y+.30,headPoint.z+.17,.235,.022,.2);
+  // Fit to the exposed face rather than placing a large dome above the head.
+  const faceBox=new T.Box3(),vertex=new T.Vector3();
+  model.traverse(o=>{if(!o.isSkinnedMesh||!/Head/i.test(o.name)||o.material?.name!=='Skin')return;o.skeleton.update();for(let i=0;i<o.geometry.attributes.position.count;i++){o.getVertexPosition(i,vertex).applyMatrix4(o.matrixWorld);faceBox.expandByPoint(root.worldToLocal(vertex));}});
+  const face=faceBox.isEmpty()?new T.Box3(headPoint.clone().add(v(-.12,-.05,-.10)),headPoint.clone().add(v(.12,.24,.17))):faceBox;
+  const extent=face.getSize(new T.Vector3()),center=face.getCenter(new T.Vector3());
+  const rimY=face.max.y-.065,rx=extent.x*.68,rz=extent.z*.68;
+  const helmet=prop(new T.SphereGeometry(1,20,10,0,Math.PI*2,0,Math.PI/2),clothMat,center.x,rimY,center.z,rx,.16,rz);helmet.name='Fitted racing helmet';
+  const brim=prop(new T.SphereGeometry(1,16,6),leather,center.x,rimY-.008,face.max.z-.005,rx,.012,.10);brim.name='Racing helmet brim';
   root.updateMatrixWorld(true);head.attach(helmet);head.attach(brim);
-  const goggles=prop(new T.SphereGeometry(1,16,8),new T.MeshStandardMaterial({color:'#716759',roughness:.28,metalness:.25}),headPoint.x,headPoint.y+.15,headPoint.z+.22,.15,.052,.038);root.updateMatrixWorld(true);head.attach(goggles);
+  // Small translucent goggles leave the nose and face visible.
+  const lensMat=new T.MeshStandardMaterial({color:'#a1b5ba',transparent:true,opacity:.32,roughness:.2,metalness:0});
+  for(const side of [-1,1]){const lens=prop(new T.SphereGeometry(1,12,6),lensMat,headPoint.x+side*.052,headPoint.y+.125,face.max.z+.006,.048,.030,.014);lens.name='Racing goggle lens';root.updateMatrixWorld(true);head.attach(lens);}
+  root.userData.helmet=helmet;root.userData.faceBounds=face;root.userData.appearance={...appearance,variant,number};
   function worldQ(b,desired){const parentQ=b.parent.getWorldQuaternion(new T.Quaternion()).invert();b.quaternion.copy(parentQ.multiply(desired));b.updateWorldMatrix(false,true);}
   function rotateWorld(b,axis,angle){if(!b)return;const q=new T.Quaternion().setFromAxisAngle(axis,angle).multiply(b.getWorldQuaternion(new T.Quaternion()));worldQ(b,q);}
   function aim(b,child,target){const a=b.getWorldPosition(new T.Vector3()),from=child.getWorldPosition(new T.Vector3()).sub(a),to=target.clone().sub(a);if(from.lengthSq()<1e-10||to.lengthSq()<1e-10)return;const delta=new T.Quaternion().setFromUnitVectors(from.normalize(),to.normalize());worldQ(b,delta.multiply(b.getWorldQuaternion(new T.Quaternion())));}
@@ -69,5 +79,5 @@ export function createJockey(color,number=1,variant='man'){
   root.userData.setSilks=shade=>applyRaceSilks(model,clothMat,shade,number);
   root.userData.update(0,0,{});const b=skinBounds(model);if(b.max.y-b.min.y<1)throw Error('Invalid posed jockey bounds.');return true;
  });
- root.userData.avatarVariant=variant;root.userData.ready=ready;return root;
+ root.userData.avatarVariant=variant;root.userData.lookNumber=lookNumber;root.userData.ready=ready;return root;
 }
