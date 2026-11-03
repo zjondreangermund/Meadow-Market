@@ -85,7 +85,12 @@ export function replaceWithAnimatedHD(rig,visualScene,{type='horse',maxVertices=
  if(!count||count>maxVertices)throw Error('HD animal exceeds mobile vertex budget: '+count);
  let originalTriangles=donor.skins.reduce((n,o)=>n+((o.geometry.index?.count||o.geometry.getAttribute('position').count)/3),0),hdTriangles=0;
  for(const asset of candidates){
-  const geometry=asset.geometry.clone(),pos=geometry.getAttribute('position'),joints=new Uint16Array(pos.count*4),weights=new Float32Array(pos.count*4);
+  const geometry=asset.geometry.clone();
+  // Quantized GLBs store normalized Int16 positions. Writing metre-space
+  // values into them wraps at +/-1 and tears the animated body apart.
+  const sourcePosition=geometry.getAttribute('position');
+  geometry.setAttribute('position',new T.Float32BufferAttribute(Array.from({length:sourcePosition.count},(_,i)=>[sourcePosition.getX(i),sourcePosition.getY(i),sourcePosition.getZ(i)]).flat(),3));
+  const pos=geometry.getAttribute('position'),joints=new Uint16Array(pos.count*4),weights=new Float32Array(pos.count*4);
   const visualToRig=hdInv.clone().multiply(asset.matrixWorld);
   const mapToMesh=parentSpace;
   for(let i=0;i<pos.count;i++){

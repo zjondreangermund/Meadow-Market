@@ -4,14 +4,15 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat} from './coat-variants.js?v=visual5';
-import {enhanceAnimalRig,loadHDSource,makeAnimatedHen} from './hd-animal-pack.js?v=visual5';
+import {applyAnimalCoat} from './coat-variants.js?v=visual5fix1';
+import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual5fix1';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
+function withDeadline(promise){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Animated model loading timed out')),15000);})]).finally(()=>clearTimeout(timer));}
 async function source(type){
  if(!cache.has(type))cache.set(type,type==='pig'
-  ?new FBXLoader().loadAsync(sources[type]).then(m=>({scene:m,animations:m.animations}))
-  :new GLTFLoader().loadAsync(sources[type]));
+  ?withDeadline(new FBXLoader().loadAsync(sources[type])).then(m=>({scene:m,animations:m.animations}))
+  :loadWithDeadline(sources[type]));
  return cache.get(type);
 }
 export async function upgradeAnimals(animals,onStatus){

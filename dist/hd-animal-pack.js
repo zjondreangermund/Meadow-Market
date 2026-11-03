@@ -1,25 +1,34 @@
 import * as T from './three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {replaceWithAnimatedHD} from './hd-rig-transfer.js';
+import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual5fix1';
 
 // Commercial-use CC0 meshes, source-controlled by immutable CDN asset IDs.
 // These files add substantially more sculpted anatomy than the old game rigs.
 // Animal motions still come from our licensed original GLTF/FBX animation rigs.
 export const HD_ASSETS=Object.freeze({
- horse:'https://cdn.3dassets.dev/assets/29169/v1/model.glb',
- cow:'https://cdn.3dassets.dev/assets/29184/v1/model.glb',
- cowJersey:'https://cdn.3dassets.dev/assets/29185/v1/model.glb',
- pig:'https://cdn.3dassets.dev/assets/29194/v1/model.glb',
- chicken:'https://cdn.3dassets.dev/assets/29197/v1/model.glb',
- chickenWhite:'https://cdn.3dassets.dev/assets/29198/v1/model.glb'
+ horse:'./models/hd/horse.glb',
+ cow:'./models/hd/cow.glb',
+ cowJersey:'./models/hd/cow-jersey.glb',
+ pig:'./models/hd/pig.glb',
+ chicken:'./models/hd/chicken.glb',
+ chickenWhite:'./models/hd/chicken-white.glb'
 });
 const files=new Map();
 let highDetailEnabled=true;
 export function setHDEnabled(value){highDetailEnabled=!!value;}
 export function hdEnabled(){return highDetailEnabled;}
+// Loading settles even when a mobile request stalls. A late result cannot
+// replace the fallback because only the settled promise is consumed.
+export function loadWithDeadline(url,timeoutMs=15000){
+ let timer;
+ return Promise.race([
+  new GLTFLoader().loadAsync(url),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Model loading timed out')),timeoutMs);})
+ ]).finally(()=>clearTimeout(timer));
+}
 export async function loadHDSource(kind){
  const url=HD_ASSETS[kind];if(!url)throw Error('Unknown HD model: '+kind);
- if(!files.has(kind))files.set(kind,new GLTFLoader().loadAsync(url).catch(e=>{files.delete(kind);throw e;}));
+ if(!files.has(kind))files.set(kind,loadWithDeadline(url).catch(e=>{files.delete(kind);throw e;}));
  return files.get(kind);
 }
 export async function enhanceAnimalRig(rig,type,{slot=0}={}){
@@ -51,7 +60,9 @@ export function makeAnimatedHen(staticScene,{size=.72,coat='buff'}={}){
  for(const b of bones.slice(1))b.position.multiplyScalar(scale);
  const c=bbox.getCenter(new T.Vector3());
  staticScene.traverse(o=>{if(!o.isMesh)return;
-  const g=o.geometry.clone(),pos=g.getAttribute('position'),transform=inverse.clone().multiply(o.matrixWorld),joints=new Uint16Array(pos.count*4),weights=new Float32Array(pos.count*4);
+  const g=o.geometry.clone(),original=g.getAttribute('position');
+  g.setAttribute('position',new T.Float32BufferAttribute(Array.from({length:original.count},(_,i)=>[original.getX(i),original.getY(i),original.getZ(i)]).flat(),3));
+  const pos=g.getAttribute('position'),transform=inverse.clone().multiply(o.matrixWorld),joints=new Uint16Array(pos.count*4),weights=new Float32Array(pos.count*4);
   for(let i=0;i<pos.count;i++){
    p.fromBufferAttribute(pos,i).applyMatrix4(transform);const normalizedX=p.x-c.x,normalizedY=p.y-bbox.min.y,normalizedZ=p.z-c.z;
    let region=0,influence=0;

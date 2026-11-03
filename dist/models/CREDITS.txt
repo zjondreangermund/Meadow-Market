@@ -39,7 +39,7 @@ High-detail farm animal geometry (v5):
 https://3dassets.dev/packs/farm-and-working-animals-hd
 License: CC0 1.0 Universal; original meshes and textures, AI-assisted authoring disclosed by publisher.
 https://creativecommons.org/publicdomain/zero/1.0/
-Individual immutable CDN assets, asynchronously loaded with CORS; not bundled with this GitHub repository:
+Original immutable asset URLs (GLBs now bundled locally under models/hd for reliable loading):
  - riding horse: https://cdn.3dassets.dev/assets/29169/v1/model.glb
  - Holstein cow: https://cdn.3dassets.dev/assets/29184/v1/model.glb
  - Jersey cow: https://cdn.3dassets.dev/assets/29185/v1/model.glb
