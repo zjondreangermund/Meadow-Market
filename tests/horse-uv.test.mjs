@@ -4,6 +4,7 @@ import * as T from '../dist/three.module.js';
 import {GLTFLoader} from '../dist/vendor/GLTFLoader.js';
 import {applyAnimalCoat,COATS,horseCoatId,ensureCoatUV} from '../dist/coat-variants.js';
 
+globalThis.ProgressEvent=class ProgressEvent {constructor(type,options={}){Object.assign(this,{type},options)}};
 const calls={canvas:0,fill:0};
 globalThis.document={createElement(tag){
  assert.equal(tag,'canvas');calls.canvas++;
