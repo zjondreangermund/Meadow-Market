@@ -4,8 +4,9 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat} from './coat-variants.js?v=visual6compat';
-import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual6compat';
+import {animateNativeHen} from './native-hen.js?v=visual62';
+import {applyAnimalCoat} from './coat-variants.js?v=visual62';
+import {enhanceAnimalRig,loadWithDeadline} from './hd-animal-pack.js?v=visual62';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
 function withDeadline(promise){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Animated model loading timed out')),15000);})]).finally(()=>clearTimeout(timer));}
@@ -21,13 +22,8 @@ export async function upgradeAnimals(animals,onStatus){
  await Promise.all(['horse','cow','pig','chicken'].map(async type=>{
   if(type==='chicken'){
    for(const a of animals.filter(a=>a.type==='chicken')){
-    try{
-     const kind=(a.appearanceSlot||0)%2?'chickenWhite':'chicken';
-     const hd=await loadHDSource(kind),hen=makeAnimatedHen(hd.scene);
-     for(const child of a.g.children)child.visible=false;
-     a.g.scale.setScalar(1);a.g.add(hen.model);
-     a.model=hen.model;a.animateBird=hen.animate;a.hd=true;a.hdError=null;
-    }catch(e){a.hd=false;a.hdError=e.message;console.warn('Using existing animated hen fallback:',e.message);}
+    a.animateBird=animateNativeHen(a.g,a.legs);a.model=a.g;
+    a.hd=false;a.nativeRig=true;a.hdError=null;
    }
    report('chicken');
    return;

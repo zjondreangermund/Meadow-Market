@@ -1,6 +1,6 @@
 import * as T from './three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual6compat';
+import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual62';
 
 // Commercial-use CC0 meshes, source-controlled by immutable CDN asset IDs.
 // These files add substantially more sculpted anatomy than the old game rigs.
@@ -33,9 +33,9 @@ export async function loadHDSource(kind){
 }
 export async function enhanceAnimalRig(rig,type,{slot=0}={}){
  // Compatibility workaround requested after phone screenshots: keep the
- // original authored skin and animations for EVERY cow/horse, including races.
+ // original authored skin and animations for every quadruped, including racehorses.
  // Static replacement meshes cannot reliably share their anatomy/skeleton.
- if(type==='cow'||type==='horse'){
+ if(['cow','horse','pig'].includes(type)){
   rig.userData.visualMode='native-animated';
   return {upgraded:false,nativeRig:true,reason:'Original animated model · compatibility workaround'};
  }
