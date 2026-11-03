@@ -1,6 +1,6 @@
 import {horsesFor} from './horses.js';
-import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=steering3';
-import {createRaceScene,SILKS} from './race-scene.js?v=steering3';
+import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=motion4';
+import {createRaceScene,SILKS} from './race-scene.js?v=motion4';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save={version:2};

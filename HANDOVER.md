@@ -71,3 +71,14 @@ User screenshot showed the continuing visual problems and horses moving across t
 Track presentation uses full-resolution High mode by default, physical surface materials, a gradient sky and rolling mountain meshes instead of pyramid silhouettes. Mobile HUD is compact, gauges are horizontal, and Field toggles the full order. Director avoids the very wide broadcast shot; it is still manually available.
 
 Relevant tests: jockey.test.mjs, race-motion.test.mjs, race-scene.test.mjs (now checks animated human rigs and whole-lap track clearance), race-engine.test.mjs, race-flow.test.mjs. Cloud GPU/WebGL rendering is still unavailable; do not claim that the finished rendered visuals or Android frame rate have been verified.
+
+## Recording-driven mounted cycle and camera update — 3 November 2026
+The user provided `1001038496.mp4` and then explicitly asked to proceed. Review confirmed the latest build was running, but posture remained upright/stiff and side cameras clipped through runners/signage. Do not attribute this recording to an old cache.
+
+`mounted-motion.js` now supplies a new eight-key racing-seat cycle sampled from the actual horse gallop action phase. Body and spine lean forward together, hips rise through suspension, hands travel with the stride, and greater effort deepens the crouch. Foot IK remains attached to stirrup targets. The idle-to-racing transition blends. These are newly authored numeric keys driving the existing rig, NOT a purchased animation pack or mocap.
+
+`race-camera.js` checks padded world obstacle boxes and opponent bounds, selects a clear alternative viewpoint and checks interpolation. The initial countdown uses a closer chase frame; view targets stay near the entrant rather than several metres inside the next horse. Race rules version is `skyline-4`; runner pace is exposed to the animation controller. Static assets remain unchanged.
+
+Asset research found a coordinated Enozone pack listed at US$70; no purchase was made and browser export compatibility remains to be verified. See ASSET_UPGRADE.md. Full replacement with professional horse/jockey art is pending a budget/owned asset and export validation. Do not claim this part is completed.
+
+Tests: mounted-motion.test.mjs (cycle and camera obstruction cases), jockey.test.mjs (actual crouch/phase-linked hip movement), plus scene, race-motion, engine and full replay flow. The fresh cloud preview on 3 November still reports that WebGL is unavailable. Rendered quality and phone performance remain unverified.

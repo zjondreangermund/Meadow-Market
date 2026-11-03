@@ -1,5 +1,5 @@
 // Skyline Cup v1: fixed-step rules shared by the playable race and its replay.
-export const STEP=1/60, RULES_VERSION='skyline-3';
+export const STEP=1/60, RULES_VERSION='skyline-4';
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function rng(seed){let n=seed>>>0;return ()=>((n=(Math.imul(n,1664525)+1013904223)>>>0)/4294967296);}
 export function createRace(horse,metres=800,seed=1,options={}){
@@ -22,6 +22,7 @@ export function stepRace(race,command={}){
    pace=progress<h.attackAt?(h.strategy===0?'cruise':'save'):'push';
    if(tick%90===i*10){const front=prior.find((r,j)=>j!==i&&r.finish===null&&r.distance>h.distance&&r.distance-h.distance<7&&Math.abs(r.lane-h.lane)<.85);if(front){for(const shift of [1,-1]){const lane=clamp(h.targetLane+shift,0,5);if(!prior.some((r,j)=>j!==i&&Math.abs(r.lane-lane)<.8&&Math.abs(r.distance-h.distance)<5)){h.targetLane=lane;break;}}}else if(h.targetLane>0&&!prior.some((r,j)=>j!==i&&Math.abs(r.lane-(h.targetLane-1))<.9&&Math.abs(r.distance-h.distance)<6))h.targetLane--;}
   }
+  h.pace=pace;
   // A lane change requires a clear pocket; runners never pass through one another.
   const laneGoal=clamp((h.targetLane-h.lane)*2,-.95,.95);h.laneVelocity+=clamp(laneGoal-h.laneVelocity,-STEP*2.4,STEP*2.4);let nextLane=clamp(h.lane+h.laneVelocity*STEP,0,5);if((h.targetLane-h.lane)*(h.targetLane-nextLane)<0){nextLane=h.targetLane;h.laneVelocity=0;}
   if(!prior.some((r,j)=>j!==i&&r.finish===null&&Math.abs(r.distance-h.distance)<3.7&&Math.abs(r.lane-nextLane)<.79))h.lane=nextLane;else h.laneVelocity=0;

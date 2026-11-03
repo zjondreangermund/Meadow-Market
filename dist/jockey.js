@@ -3,6 +3,7 @@ import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
 import {fitRig,matteMaterials,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
+import {mountedMotion} from './mounted-motion.js';
 let assetPromise;
 const v=(x,y,z)=>new T.Vector3(x,y,z),clamp=T.MathUtils.clamp;
 // Retain the authored humanoid topology, face, hands, clothing and skeleton.
@@ -22,9 +23,10 @@ export function createJockey(color,number=1){
   const model=clone(asset.scene);smoothRig(model);fitRig(model,2.25);matteMaterials(model,{roughness:.78});root.add(model);root.userData.model=model;
   model.traverse(o=>{if(!o.isMesh)return;if(o.name==='Farmer_Head_2')o.visible=false;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(/Farmer_Pants/.test(o.name))m.color.set('#e4e1d7');else if(/Farmer_Feet/.test(o.name))m.color.set('#252329');else if(/Farmer_Body/.test(o.name)&&m.name!=='Skin')m.color.set(m.name==='Beige'?'#ece3d0':color);}});
   const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
+  let modelBase;
   const saved=Object.values(bones).map(b=>({b,q:b.quaternion.clone(),p:b.position.clone()}));
   root.updateMatrixWorld(true);const hips=bones.Hips||bones.Body;
-  const hp=root.worldToLocal(hips.getWorldPosition(new T.Vector3()));model.position.add(v(0,1.99,-.12).sub(hp));root.updateMatrixWorld(true);
+  const hp=root.worldToLocal(hips.getWorldPosition(new T.Vector3()));model.position.add(v(0,1.99,-.12).sub(hp));modelBase=model.position.clone();root.updateMatrixWorld(true);
   // The helmet follows the actual head bone; hide only the original straw hat.
   const head=bones.Head,headPoint=root.worldToLocal(head.getWorldPosition(new T.Vector3()));
   const helmet=prop(new T.SphereGeometry(1,28,16,0,Math.PI*2,0,Math.PI*.55),clothMat,headPoint.x,headPoint.y+.31,headPoint.z,.235,.21,.24);
@@ -36,21 +38,23 @@ export function createJockey(color,number=1){
   function aim(b,child,target){const a=b.getWorldPosition(new T.Vector3()),from=child.getWorldPosition(new T.Vector3()).sub(a),to=target.clone().sub(a);if(from.lengthSq()<1e-10||to.lengthSq()<1e-10)return;const delta=new T.Quaternion().setFromUnitVectors(from.normalize(),to.normalize());worldQ(b,delta.multiply(b.getWorldQuaternion(new T.Quaternion())));}
   function solve(upper,lower,end,target,hint){if(!upper||!lower||!end)return;const a=upper.getWorldPosition(new T.Vector3()),b=lower.getWorldPosition(new T.Vector3()),e=end.getWorldPosition(new T.Vector3()),l1=a.distanceTo(b),l2=b.distanceTo(e),axis=target.clone().sub(a),distance=clamp(axis.length(),Math.abs(l1-l2)+.001,l1+l2-.001);axis.normalize();const pole=hint.clone().sub(a);pole.addScaledVector(axis,-pole.dot(axis)).normalize();const c=clamp((l1*l1+distance*distance-l2*l2)/(2*l1*distance),-1,1),joint=a.clone().addScaledVector(axis,l1*c).addScaledVector(pole,l1*Math.sqrt(1-c*c));aim(upper,lower,joint);aim(lower,end,target);}
   const point=p=>root.localToWorld(p.clone());
+  let motionBlend=0;
   root.userData.update=(time,gait,control={})=>{
    const steer=clamp(typeof control==='number'?control:control.steer||0,-1,1),bank=typeof control==='number'?0:control.bank||0;
+   motionBlend=T.MathUtils.lerp(motionBlend,gait>.05?1:0,1-Math.exp(-(control.delta??1)*12));const cycle=mountedMotion(control.phase||0,control.effort??.5,true),rest=mountedMotion(0,.5,false);for(const key of Object.keys(cycle))cycle[key]=T.MathUtils.lerp(rest[key],cycle[key],motionBlend);model.position.copy(modelBase);model.position.y+=cycle.hip;
    for(const s of saved){s.b.quaternion.copy(s.q);s.b.position.copy(s.p);}
    root.updateMatrixWorld(true);const rootQ=root.getWorldQuaternion(new T.Quaternion()),axisX=v(1,0,0).applyQuaternion(rootQ),axisY=v(0,1,0).applyQuaternion(rootQ),axisZ=v(0,0,1).applyQuaternion(rootQ);
-   rotateWorld(bones.Torso,axisX,gait?.64:.43);rotateWorld(bones.Chest,axisZ,-bank*.7-steer*.035);rotateWorld(bones.Head,axisX,-.2);rotateWorld(bones.Head,axisY,-steer*.15);
+   rotateWorld(bones.Body,axisX,cycle.body);rotateWorld(bones.Torso,axisX,cycle.spine);rotateWorld(bones.Chest,axisZ,-bank*.7-steer*.035);rotateWorld(bones.Neck,axisX,cycle.head*.35);rotateWorld(bones.Head,axisX,cycle.head*.65);rotateWorld(bones.Head,axisY,-steer*.15);
    const hands=[];
    for(const [side,suffix]of [[1,'L'],[-1,'R']]){
     // Inside hand shortens its rein; outside hand releases and guides the neck.
-    const inside=side*steer>0,hand=v(side*.28-(steer*.03),2.30+(inside?.025:-.015),.55-(inside?Math.abs(steer)*.25:-Math.abs(steer)*.05));
-    solve(bones['UpperArm'+suffix],bones['LowerArm'+suffix],bones['Wrist'+suffix],point(hand),point(v(side*.53,2.3,.22)));hands[side<0?0:1]=root.worldToLocal(bones['Wrist'+suffix].getWorldPosition(new T.Vector3()));
+    const inside=side*steer>0,hand=v(side*.28-(steer*.03),2.24+cycle.handY+(inside?.025:-.015),.73+cycle.handZ-(inside?Math.abs(steer)*.20:-Math.abs(steer)*.04));
+    solve(bones['UpperArm'+suffix],bones['LowerArm'+suffix],bones['Wrist'+suffix],point(hand),point(v(side*.48,2.24+cycle.handY,.42)));hands[side<0?0:1]=root.worldToLocal(bones['Wrist'+suffix].getWorldPosition(new T.Vector3()));
     const foot=v(side*.45,1.38,.04),end=bones['LowerLeg'+suffix]?.children.find(x=>x.name.endsWith('_end'))||bones['Foot'+suffix];
     solve(bones['UpperLeg'+suffix],bones['LowerLeg'+suffix],end,point(foot),point(v(side*.53,1.84,.36)));
     const f=bones['Foot'+suffix];if(f){f.position.copy(f.parent.worldToLocal(point(foot)));f.updateWorldMatrix(false,true);}
    }
-   root.userData.hands=hands;root.userData.steer=steer;
+   root.userData.cycle=cycle;root.userData.hands=hands;root.userData.steer=steer;
    const bit=control.bitPosition?.clone()||v(steer*.10,2.04,1.45);
    for(let j=0;j<2;j++){const end=bit.clone();end.x+=(j?1:-1)*.14;const start=hands[j],mid=start.clone().lerp(end,.5);mid.y-=.10+(j*2-1)*steer*.035;const c=new T.QuadraticBezierCurve3(start,mid,end),p=reins[j].geometry.attributes.position;for(let k=0;k<25;k++){const v=c.getPoint(k/24);p.setXYZ(k,v.x,v.y,v.z);}p.needsUpdate=true;}
    model.updateMatrixWorld(true);
