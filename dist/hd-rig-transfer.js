@@ -4,7 +4,7 @@ import * as T from './three.module.js';
 // quadruped skeleton. The animation clips, bones and game state remain unchanged.
 // Only source geometry/materials are replaced. Nearest-three bind-pose weights
 // preserve deformation instead of making a motionless GLB slide over the ground.
-const cache=new Map();
+const cache=new WeakMap();
 function gridKey(x,y,z){return Math.floor(x/.24)+','+Math.floor(y/.24)+','+Math.floor(z/.24);}
 const temp=new T.Vector3(),scaled=new T.Vector3(),invRoot=new T.Matrix4();
 function donorRig(model){
@@ -77,15 +77,22 @@ export function replaceWithAnimatedHD(rig,visualScene,{type='horse',maxVertices=
  const donor=donorRig(rig),grid=spatialIndex(donor.samples),hd=relativeBounds(visualScene);
  const srcSize=donor.bounds.getSize(new T.Vector3()),hdSize=hd.getSize(new T.Vector3());
  if(Math.min(srcSize.x,srcSize.y,srcSize.z,hdSize.x,hdSize.y,hdSize.z)<.001)throw Error('Cannot align degenerate model');
- const primary=donor.primary;const inverse=rig.matrixWorld.clone().invert(),parentSpace=primary.matrixWorld.clone().invert().multiply(rig.matrixWorld);
+ const primary=donor.primary;
+ let byVisual=cache.get(primary.geometry);if(!byVisual){byVisual=new WeakMap();cache.set(primary.geometry,byVisual);}
+ let cached=byVisual.get(visualScene);
+ const signature=JSON.stringify([donor.bounds.min.toArray(),donor.bounds.max.toArray(),primary.matrixWorld.clone().invert().multiply(rig.matrixWorld).elements.map(v=>Math.round(v*1e6)/1e6)]);
+ if(cached?.signature!==signature)cached={signature,geometries:[]};
+ const inverse=rig.matrixWorld.clone().invert(),parentSpace=primary.matrixWorld.clone().invert().multiply(rig.matrixWorld);
  const hdInv=visualScene.matrixWorld.clone().invert(),children=[],p=new T.Vector3(),out=new T.Vector3(),oldGeom=primary.geometry;
  const meshes=[];visualScene.updateMatrixWorld(true);
  const candidates=[];visualScene.traverse(o=>{if(o.isMesh&&o.geometry?.getAttribute('position'))candidates.push(o);});
  const count=candidates.reduce((n,o)=>n+o.geometry.getAttribute('position').count,0);
  if(!count||count>maxVertices)throw Error('HD animal exceeds mobile vertex budget: '+count);
  let originalTriangles=donor.skins.reduce((n,o)=>n+((o.geometry.index?.count||o.geometry.getAttribute('position').count)/3),0),hdTriangles=0;
- for(const asset of candidates){
-  const geometry=asset.geometry.clone();
+ for(const [assetIndex,asset] of candidates.entries()){
+  let geometry=cached.geometries[assetIndex];
+  if(!geometry){
+  geometry=asset.geometry.clone();
   // Quantized GLBs store normalized Int16 positions. Writing metre-space
   // values into them wraps at +/-1 and tears the animated body apart.
   const sourcePosition=geometry.getAttribute('position');
@@ -107,8 +114,10 @@ export function replaceWithAnimatedHD(rig,visualScene,{type='horse',maxVertices=
   geometry.setAttribute('skinIndex',new T.Uint16BufferAttribute(joints,4));
   geometry.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));
   // Normal vectors are recalculated after remapping and non-uniform scaling.
-  geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();
-  hdTriangles+=(geometry.index?.count||pos.count)/3;
+  geometry.deleteAttribute('normal');geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();
+  cached.geometries[assetIndex]=geometry;
+  }
+  hdTriangles+=(geometry.index?.count||geometry.attributes.position.count)/3;
   const materials=(Array.isArray(asset.material)?asset.material:[asset.material]).map(m=>m.clone());
   const skinned=new T.SkinnedMesh(geometry,Array.isArray(asset.material)?materials:materials[0]);
   skinned.name='Meadow HD '+type+' '+(asset.name||'sculpt');
@@ -117,6 +126,7 @@ export function replaceWithAnimatedHD(rig,visualScene,{type='horse',maxVertices=
   skinned.castShadow=true;skinned.receiveShadow=true;skinned.frustumCulled=false;
   primary.parent.add(skinned);meshes.push(skinned);
  }
+ byVisual.set(visualScene,cached);
  for(const mesh of donor.skins)mesh.visible=false;
  rig.userData.hdVisuals=meshes;
  rig.userData.hdAssetInfo={type,originalTriangles,hdTriangles,vertexCount:count,animated:true};

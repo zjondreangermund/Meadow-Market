@@ -4,8 +4,8 @@ import {smoothRig} from './smooth-rig.js';
 import {FBXLoader} from './vendor/FBXLoader.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat} from './coat-variants.js?v=visual5fix1';
-import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual5fix1';
+import {applyAnimalCoat} from './coat-variants.js?v=visual5fix2';
+import {enhanceAnimalRig,loadHDSource,makeAnimatedHen,loadWithDeadline} from './hd-animal-pack.js?v=visual5fix2';
 const sources={horse:'./models/horse.gltf',cow:'./models/cow.gltf',pig:'./models/pig.fbx'};
 const cache=new Map();
 function withDeadline(promise){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Animated model loading timed out')),15000);})]).finally(()=>clearTimeout(timer));}
@@ -16,6 +16,8 @@ async function source(type){
  return cache.get(type);
 }
 export async function upgradeAnimals(animals,onStatus){
+ const describe=type=>({hd:animals.filter(a=>a.type===type&&a.hd).length,total:animals.filter(a=>a.type===type).length,items:animals.filter(a=>a.type===type).map(a=>({name:a.g.userData.name||type,hd:!!a.hd,error:a.hdError||null}))});
+ const report=type=>onStatus?.(type,true,describe(type));
  await Promise.all(['horse','cow','pig','chicken'].map(async type=>{
   if(type==='chicken'){
    for(const a of animals.filter(a=>a.type==='chicken')){
@@ -24,10 +26,10 @@ export async function upgradeAnimals(animals,onStatus){
      const hd=await loadHDSource(kind),hen=makeAnimatedHen(hd.scene);
      for(const child of a.g.children)child.visible=false;
      a.g.scale.setScalar(1);a.g.add(hen.model);
-     a.model=hen.model;a.animateBird=hen.animate;a.hd=true;
-    }catch(e){console.warn('Using existing animated hen fallback:',e.message);}
+     a.model=hen.model;a.animateBird=hen.animate;a.hd=true;a.hdError=null;
+    }catch(e){a.hd=false;a.hdError=e.message;console.warn('Using existing animated hen fallback:',e.message);}
    }
-   onStatus?.('chicken',true,{hd:animals.filter(a=>a.type==='chicken').filter(a=>a.hd).length,total:animals.filter(a=>a.type==='chicken').length});
+   report('chicken');
    return;
   }
   try{
@@ -40,8 +42,8 @@ export async function upgradeAnimals(animals,onStatus){
     // connection the original rig remains playable, never a static substitute.
     try{
      const detail=await enhanceAnimalRig(model,type,{slot:typeof a.appearanceSlot==='number'?a.appearanceSlot:0});
-     a.hd=detail.upgraded;
-    }catch(e){a.hd=false;console.warn('HD '+type+' unavailable; using animated rig:',e.message);}
+     a.hd=detail.upgraded;a.hdError=detail.upgraded?null:detail.reason;
+    }catch(e){a.hd=false;a.hdError=e.message;console.warn('HD '+type+' unavailable; using animated rig:',e.message);}
     applyAnimalCoat(model,type,a.g.userData.appearanceKey||a.g.userData.name||type,a.appearanceSlot);
     model.traverse(o=>{if(o.isMesh){
      if(type==='pig')for(const m of(Array.isArray(o.material)?o.material:[o.material])){
@@ -59,8 +61,8 @@ export async function upgradeAnimals(animals,onStatus){
     });});
     a.currentAction=null;setAnimalMotion(a,'idle',0);
    }
-   onStatus?.(type,true,{hd:animals.filter(a=>a.type===type).filter(a=>a.hd).length,total:animals.filter(a=>a.type===type).length});
-  }catch(e){console.warn('Existing animal rig could not load:',type,e);onStatus?.(type,false);}
+   report(type);
+  }catch(e){console.warn('Existing animal rig could not load:',type,e);for(const a of animals.filter(a=>a.type===type)){a.hdError=e.message;}onStatus?.(type,false,describe(type));}
  }));
 }
 export function setAnimalMotion(a,kind,speed=0){

@@ -1,6 +1,6 @@
 import * as T from './three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual5fix1';
+import {replaceWithAnimatedHD} from './hd-rig-transfer.js?v=visual5fix2';
 
 // Commercial-use CC0 meshes, source-controlled by immutable CDN asset IDs.
 // These files add substantially more sculpted anatomy than the old game rigs.
@@ -28,7 +28,7 @@ export function loadWithDeadline(url,timeoutMs=15000){
 }
 export async function loadHDSource(kind){
  const url=HD_ASSETS[kind];if(!url)throw Error('Unknown HD model: '+kind);
- if(!files.has(kind))files.set(kind,loadWithDeadline(url).catch(e=>{files.delete(kind);throw e;}));
+ if(!files.has(kind))files.set(kind,loadWithDeadline(url).catch(()=>loadWithDeadline(url)).catch(e=>{files.delete(kind);throw Error(kind+': '+e.message);}));
  return files.get(kind);
 }
 export async function enhanceAnimalRig(rig,type,{slot=0}={}){
@@ -74,7 +74,7 @@ export function makeAnimatedHen(staticScene,{size=.72,coat='buff'}={}){
    pos.setXYZ(i,(p.x-c.x)*scale,normalizedY*scale,(p.z-c.z)*scale);
   }
   g.setAttribute('skinIndex',new T.Uint16BufferAttribute(joints,4));
-  g.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));g.computeVertexNormals();g.computeBoundingSphere();
+  g.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));g.deleteAttribute('normal');g.computeVertexNormals();g.computeBoundingSphere();
   const mat=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();
   const mesh=new T.SkinnedMesh(g,mat);mesh.name='Meadow HD animated hen '+o.name;group.add(mesh);mesh.bind(skeleton);
   mesh.castShadow=true;mesh.receiveShadow=true;mesh.frustumCulled=false;materialMesh.push(mesh);
