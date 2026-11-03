@@ -13,7 +13,7 @@ jobs:
           node-version: '22'
       - name: Validate JavaScript syntax
         run: |
-          for f in dist/{coat-variants,garment-materials,animal-assets,farmer-rig,jockey,farm,race-scene,race}.js; do
+          for f in dist/{coat-variants,garment-materials,human-surfaces,hd-rig-transfer,hd-animal-pack,animal-assets,farmer-rig,jockey,farm,race-scene,race}.js; do
             node --check "$f"
           done
       - name: Validate full farm and racing regression suite
