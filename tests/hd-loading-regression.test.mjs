@@ -33,6 +33,17 @@ for(const clip of base.animations.filter(c=>['idle','walk','eating'].includes(c.
   for(const axis of ['x','y','z'])assert.ok(Number.isFinite(size[axis])&&size[axis]<expected[axis]*1.6,'bounded animated '+clip.name+' '+axis);
  }
 }
+// Exercise the real HD horse with all gameplay clips, not only a toy mesh.
+const horse=await parse('models/horse.gltf'),horseHD=await parse(HD_ASSETS.horse);
+fitRig(horse.scene,2.6);replaceWithAnimatedHD(horse.scene,horseHD.scene,{type:'horse'});
+const horseMixer=new T.AnimationMixer(horse.scene);
+for(const clip of horse.animations.filter(c=>['idle','walk','eating','gallop'].includes(c.name.toLowerCase()))){
+ horseMixer.stopAllAction();horseMixer.clipAction(clip).play();
+ for(let frame=0;frame<60;frame++){
+  horseMixer.update(1/30);const bounds=skinBounds(horse.scene,8),size=bounds.getSize(new T.Vector3());
+  assert.ok(size.y>1.3&&size.y<4.2&&size.z<6&&size.x<3,'bounded real HD horse '+clip.name);
+ }
+}
 const original=GLTFLoader.prototype.loadAsync;
 GLTFLoader.prototype.loadAsync=()=>new Promise(()=>{});
 await assert.rejects(loadWithDeadline('stalled.glb',10),/timed out/);

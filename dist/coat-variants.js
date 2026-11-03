@@ -155,7 +155,7 @@ export function applyAnimalCoat(model,type,key,slot){
    const next=m.clone(),name=(o.name||'')+' '+(m.name||'');
    if(isSeparatePart(name))return next;
    next.metalness=0;next.roughness=type==='horse'?.72:type==='pig'?.91:.84;next.flatShading=false;
-   if(isMane(name)){next.map=null;next.color.set(coat.mane);}
+   if(isMane(name)||(type==='horse'&&/^hideDark$/i.test(m.name||''))){next.map=null;next.color.set(coat.mane);}
    else {
     // Make the original no-UV horse/cow models truly accept patterned hide maps.
     if(texture)ensureCoatUV(o,type);

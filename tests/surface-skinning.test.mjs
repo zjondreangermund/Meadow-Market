@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import * as T from '../dist/three.module.js';
+import {skinSurface} from '../dist/surface-skinning.js';
+const v=(x,y,z,j)=>({x,y,z,joints:[j,0,0,0],weights:[1,0,0,0]});
+const a=v(0,0,0,0),b=v(1,0,0,1),c=v(1,1,0,1),d=v(0,1,0,0);
+const transfer=skinSurface([[a,b,c],[a,c,d],[v(.2,.4,.4,2),v(.3,.4,.4,2),v(.2,.6,.4,2)]]);
+const weight=(x,y)=>{const [j,w]=transfer(new T.Vector3(x,y,.01));assert.ok(!j.some((bone,k)=>bone===2&&w[k]>.001),'opposite surface does not influence nearby skin');return j.reduce((n,bone,i)=>n+(bone===1?w[i]:0),0);};
+for(const x of [.1,.239,.24,.241,.499,.501,.9])for(const y of [.1,.5,.9])assert.ok(Math.abs(weight(x,y)-x)<1e-6,'continuous barycentric weights across grid and triangle boundaries');
+assert.ok(Math.abs(weight(.241,.5)-weight(.239,.5)-.002)<1e-6);
+console.log('PASS: continuous skin weights across cell and triangle boundaries, without unrelated surface influences.');
