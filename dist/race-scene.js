@@ -7,7 +7,8 @@ import {racingPose} from './race-motion.js';
 import {safeRaceCamera,cameraClear} from './race-camera.js?v=world8';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=visual4';
+import {applyAnimalCoat,horseCoatId} from './coat-variants.js?v=visual5';
+import {enhanceAnimalRig} from './hd-animal-pack.js?v=visual5';
 export const SILKS=['#f4bd67','#90cbb3','#c5b1ef','#e48779','#7eb8e0','#eee0aa'];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobile=innerWidth<750;
@@ -77,7 +78,8 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
  const racers=[];
  function fallback(){return {g:new T.Group(),legs:[]};}
  const coat=['#bd8e60','#5a4747','#d8cfb8','#a76549','#514c59','#c3a36c'];
- for(let i=0;i<6;i++){const root=new T.Group(),f=fallback(coat[i]),jockey=createJockey(SILKS[i],i+1);root.add(f.g,jockey);root.visible=false;scene.add(root);racers.push({root,fallback:f,jockey,mixer:null,action:null});}
+ let playerAvatar='man';try{playerAvatar=JSON.parse(localStorage.getItem('meadow-cycle-v2'))?.avatar==='lady'?'lady':'man';}catch{}
+ for(let i=0;i<6;i++){const root=new T.Group(),f=fallback(coat[i]),jockey=createJockey(SILKS[i],i+1,i===0?playerAvatar:i%2?'lady':'man');root.add(f.g,jockey);root.visible=false;scene.add(root);racers.push({root,fallback:f,jockey,mixer:null,action:null});}
  const dust=new T.InstancedMesh(new T.SphereGeometry(.13,5,4),new T.MeshBasicMaterial({color:'#e8ccad',transparent:true,opacity:.32,depthWrite:false}),72);scene.add(dust);const particles=Array.from({length:72},(_,i)=>({age:i/30,life:.45+(i%5)*.08,pos:new T.Vector3()}));
  const confetti=new T.InstancedMesh(new T.PlaneGeometry(.16,.3),new T.MeshBasicMaterial({side:T.DoubleSide}),160);confetti.visible=false;scene.add(confetti);for(let i=0;i<160;i++)confetti.setColorAt(i,new T.Color(SILKS[i%6]));
  let loaded=false,angle=0,camMode='Chase',zoomFactor=1,elapsed=0,finishAge=0;const look=new T.Vector3(),desiredPos=new T.Vector3(),desiredLook=new T.Vector3();let first=true;
@@ -87,7 +89,18 @@ const trackCanvas=document.createElement('canvas');trackCanvas.width=1024;trackC
    const r=racers[i],model=clone(asset.scene),smoothed=smoothRig(model),fitted=fitRig(model,2.65);
    model.traverse(o=>{if(o.isMesh){if(!o.geometry.attributes.color){const p=o.geometry.attributes.position,colors=new Float32Array(p.count*3);for(let k=0;k<p.count;k++){const f=.94+.055*Math.sin(p.getX(k)*73+p.getY(k)*31+p.getZ(k)*29);colors[k*3]=f;colors[k*3+1]=f;colors[k*3+2]=f;}o.geometry.setAttribute('color',new T.BufferAttribute(colors,3));}o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const converted=(Array.isArray(o.material)?o.material:[o.material]).map(m=>{const c=new T.MeshStandardMaterial({name:m.name,color:m.color,map:m.map,side:T.DoubleSide,transparent:false,opacity:1,bumpMap:coatDetail,bumpScale:.014,roughness:.42,metalness:0,vertexColors:true,emissive:0,flatShading:false});if(/^Main/.test(m.name))c.color.set(coat[i]).multiplyScalar(/Dark/.test(m.name)?.72:/Light/.test(m.name)?1.12:1);return c;});o.material=converted.length===1?converted[0]:converted;}});
    applyAnimalCoat(model,'horse','race-'+i,[4,3,5,2,0,1][i]);const ropeGeo=new T.BufferGeometry();ropeGeo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(33*3),3));r.lead=new T.Line(ropeGeo,new T.LineBasicMaterial({color:'#e7cb94'}));r.lead.frustumCulled=false;scene.add(r.lead);const bridleGeo=new T.BufferGeometry();bridleGeo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(33*3),3));r.bridle=new T.Line(bridleGeo,new T.LineBasicMaterial({color:'#30241d'}));r.bridle.frustumCulled=false;r.root.add(r.bridle);r.root.add(model);r.fallback.g.visible=false;r.model=model;r.mixer=new T.AnimationMixer(model);const clip=asset.animations.find(a=>/gallop$/i.test(a.name))||asset.animations.find(a=>/walk$/i.test(a.name));const idle=asset.animations.find(a=>/idle$/i.test(a.name));const walk=asset.animations.find(a=>/walk$/i.test(a.name));if(walk)r.walk=r.mixer.clipAction(walk);if(clip)r.action=r.mixer.clipAction(clip);if(idle)r.idle=r.mixer.clipAction(idle).play();
-  }await Promise.all(racers.map(r=>r.jockey.userData.ready));for(const r of racers){const b=skinBounds(r.model);if(b.max.y-b.min.y<1.9)throw Error('Horse rig failed visible-size validation.');}for(const r of racers)r.root.visible=true;loaded=true;return true;
+   }
+   await Promise.all(racers.map(r=>r.jockey.userData.ready));
+   // Upgrade all six genuinely skinned racehorses together, with the old
+   // Quaternius rig as a safe fallback if HD downloads are unavailable.
+   await Promise.all(racers.map(async(r,i)=>{
+    try{
+     const result=await enhanceAnimalRig(r.model,'horse',{slot:i});
+     r.hd=result.upgraded;
+     if(r.hd)applyAnimalCoat(r.model,'horse','race-'+i,[4,3,5,2,0,1][i]);
+    }catch(e){r.hd=false;console.warn('HD racehorse fallback',i,e.message);}
+   }));
+   for(const r of racers){const b=skinBounds(r.model);if(b.max.y-b.min.y<1.9)throw Error('Horse rig failed visible-size validation.');}for(const r of racers)r.root.visible=true;loaded=true;return true;
  }).catch(e=>{console.warn('Race assets unavailable; racing remains disabled.',e);return false;});
  function setHorseProfile(profile){if(!profile?.id)return;const model=racers[0].model;if(model)applyAnimalCoat(model,'horse',profile.id,horseCoatId(profile));}
   function setJockey(profile){racers[0].jockey.userData.setSilks?.(profile.color);racers[0].jockey.userData.riderName=profile.name;}
