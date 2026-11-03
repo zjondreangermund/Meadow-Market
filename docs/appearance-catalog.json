@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "status": "concept-only: not loaded by the runtime until approved PBR models/material masks exist",
+  "visualTarget": "premium semi-realistic PBR 3D; sculpted anatomy; never clay/capsule/sphere-built people",
+  "identityRule": "A farmer and their race-day variant use one persistent human identity and skeleton, with different garments, helmets and poses.",
+  "patternRule": "Assign appearance on animal creation from immutable individual ID; store appearanceSeed and selected coat/markings in the existing horse/animal record; avoid exact duplicate markings in the visible group; never rerandomize per render.",
+  "characterIdentities": [
+    {
+      "id": "fieldhand",
+      "name": "Fieldhand",
+      "silhouette": "athletic working adult",
+      "farmClothes": [
+        "indigo work denim",
+        "sand cotton shirt",
+        "brown leather boots"
+      ],
+      "jockeyClothes": [
+        "cream helmet",
+        "teal chevron silks",
+        "fitted ivory breeches",
+        "brown tall boots"
+      ],
+      "faceId": "character-fieldhand-001"
+    },
+    {
+      "id": "stable-expert",
+      "name": "Stable Expert",
+      "silhouette": "adult, strong posture, practical braided hair",
+      "farmClothes": [
+        "russet canvas jacket",
+        "olive trousers",
+        "rugged boots"
+      ],
+      "jockeyClothes": [
+        "burgundy/gold diagonal silks",
+        "riding helmet",
+        "safety vest",
+        "tall boots"
+      ],
+      "faceId": "character-stable-001"
+    },
+    {
+      "id": "ranch-manager",
+      "name": "Ranch Manager",
+      "silhouette": "adult, lean build",
+      "farmClothes": [
+        "charcoal work shirt",
+        "khaki trousers",
+        "green field vest"
+      ],
+      "jockeyClothes": [
+        "cobalt/white hoop silks",
+        "lightweight fitted riding pants",
+        "helmet/goggles"
+      ],
+      "faceId": "character-manager-001"
+    }
+  ],
+  "jockeySilks": [
+    {
+      "id": "teal-chevron",
+      "base": "#318B83",
+      "secondary": "#F6EAD5",
+      "pattern": "chevron"
+    },
+    {
+      "id": "burgundy-diagonal",
+      "base": "#853B4B",
+      "secondary": "#D7B568",
+      "pattern": "diagonal-sash"
+    },
+    {
+      "id": "cobalt-hoops",
+      "base": "#245EA2",
+      "secondary": "#F6F8FA",
+      "pattern": "double-hoop"
+    },
+    {
+      "id": "emerald-diamonds",
+      "base": "#2F7048",
+      "secondary": "#E7CF7B",
+      "pattern": "diamond"
+    }
+  ],
+  "coats": {
+    "horse": [
+      {
+        "id": "bay-star",
+        "base": "#5A332A",
+        "mane": "#1E1B1A",
+        "markings": [
+          "small-forehead-star"
+        ],
+        "pattern": "solid-with-star"
+      },
+      {
+        "id": "chestnut-stripe-socks",
+        "base": "#A7532F",
+        "mane": "#985027",
+        "markings": [
+          "narrow-face-stripe",
+          "left-fore-sock",
+          "right-hind-sock"
+        ],
+        "pattern": "stripe-and-two-socks"
+      },
+      {
+        "id": "black-solid",
+        "base": "#191919",
+        "mane": "#11100F",
+        "markings": [],
+        "pattern": "solid-black"
+      },
+      {
+        "id": "buckskin-points",
+        "base": "#C8A16A",
+        "mane": "#342922",
+        "markings": [
+          "dark-leg-points",
+          "left-hind-sock"
+        ],
+        "pattern": "buckskin-points"
+      },
+      {
+        "id": "piebald-asymmetric",
+        "base": "#24201E",
+        "mane": "#1C1917",
+        "markings": [
+          "asymmetric-white-patches",
+          "face-blaze"
+        ],
+        "pattern": "piebald"
+      },
+      {
+        "id": "dapple-grey",
+        "base": "#909696",
+        "mane": "#D5D4CE",
+        "markings": [
+          "small-dapples",
+          "right-fore-sock"
+        ],
+        "pattern": "dapple"
+      }
+    ],
+    "cow": [
+      {
+        "id": "holstein-irregular",
+        "base": "#F8F5EF",
+        "markings": [
+          "irregular-black-patches"
+        ],
+        "pattern": "black-white"
+      },
+      {
+        "id": "hereford-face",
+        "base": "#8D4D33",
+        "markings": [
+          "white-face",
+          "white-belly"
+        ],
+        "pattern": "red-white-face"
+      },
+      {
+        "id": "brahman-charcoal",
+        "base": "#69716D",
+        "markings": [
+          "pale-shoulder-highlights"
+        ],
+        "pattern": "grey-shading"
+      },
+      {
+        "id": "cream-solid",
+        "base": "#E4CEAB",
+        "markings": [
+          "small-ear-spot"
+        ],
+        "pattern": "cream"
+      }
+    ],
+    "pig": [
+      {
+        "id": "pink-ear-spots",
+        "base": "#D8AFA3",
+        "markings": [
+          "left-ear-patch",
+          "shoulder-spot"
+        ],
+        "pattern": "pink-spotted"
+      },
+      {
+        "id": "ginger-fleck",
+        "base": "#AD6749",
+        "markings": [
+          "freckles"
+        ],
+        "pattern": "red-fleck"
+      },
+      {
+        "id": "black-white-belt",
+        "base": "#3A312E",
+        "markings": [
+          "white-shoulder-belt"
+        ],
+        "pattern": "belted"
+      },
+      {
+        "id": "cream-black-patches",
+        "base": "#DDD0B6",
+        "markings": [
+          "large-asymmetric-dark-patches"
+        ],
+        "pattern": "patched"
+      }
+    ],
+    "chicken": [
+      {
+        "id": "buff",
+        "base": "#C69B53",
+        "markings": [
+          "cream-wing-tips"
+        ],
+        "pattern": "buff"
+      },
+      {
+        "id": "redbrown",
+        "base": "#883B27",
+        "markings": [
+          "dark-neck-hackle"
+        ],
+        "pattern": "red-brown"
+      },
+      {
+        "id": "barred",
+        "base": "#4F4F4E",
+        "markings": [
+          "alternating-white-feather-bands"
+        ],
+        "pattern": "barred"
+      },
+      {
+        "id": "speckled",
+        "base": "#B6A28B",
+        "markings": [
+          "random-small-dark-speckles"
+        ],
+        "pattern": "speckled"
+      }
+    ]
+  },
+  "texturingRules": {
+    "material": "PBR standard or physical mesh materials: albedo, normal, roughness, optional hair cards and ambient occlusion",
+    "uniqueness": "Use markings masks and UV-backed pattern placement varied by the persisted appearanceSeed; never simply paint the entire skinned mesh a flat random colour.",
+    "quality": "Mobile-friendly compressed textures and LODs; verify actual live rendering after import.",
+    "preserveIdentity": "Reuse person head mesh/skeleton; swap silks and equipment, not face geometry, between farmer and jockey."
+  },
+  "animationClips": {
+    "human": [
+      "idle",
+      "walk",
+      "run",
+      "stop",
+      "turn",
+      "plant",
+      "harvest",
+      "carry",
+      "water",
+      "feed",
+      "groom",
+      "lead-horse",
+      "gate-open",
+      "mount",
+      "dismount"
+    ],
+    "horse": [
+      "idle",
+      "blink",
+      "ear-flick",
+      "tail-swish",
+      "walk",
+      "trot",
+      "canter",
+      "gallop",
+      "eat",
+      "drink",
+      "lead",
+      "start-gate",
+      "finish-runthrough",
+      "cooldown"
+    ],
+    "cow": [
+      "idle",
+      "walk",
+      "eat",
+      "drink",
+      "rest"
+    ],
+    "pig": [
+      "idle",
+      "walk",
+      "sniff",
+      "eat",
+      "rest"
+    ],
+    "chicken": [
+      "idle",
+      "walk",
+      "peck",
+      "flap",
+      "rest"
+    ],
+    "jockey": [
+      "walk",
+      "mount",
+      "warmup",
+      "gate",
+      "crouch",
+      "gallop-synced",
+      "steer",
+      "finish",
+      "dismount"
+    ]
+  }
+}
