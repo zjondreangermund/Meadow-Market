@@ -1,15 +1,15 @@
 import {mobileDevice} from './graphics-profile.js?v=track8';
 const phoneGraphics=mobileDevice();
-import {horsesFor} from './horses.js';
+import {horsesFor,racingHorses} from './horses.js?v=breeding9';
 import {horseCoatId} from './coat-variants.js?v=visual4';
-import {fresh} from './economy.js';
+import {fresh} from './economy.js?v=breeding9';
 import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js?v=track8';
-import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=world8';
+import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=breeding9';
 import {createRaceScene,SILKS} from './race-scene.js?v=track8';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();
-const horses=horsesFor(save);let selected=horses.find(h=>h.id===new URLSearchParams(location.search).get('horse'))||horses[0],metres=800,plan='stalker';const eventSeed=crypto.getRandomValues(new Uint32Array(1))[0];const track=eventSeed%3===0?'soft':'firm';
+const horses=racingHorses(save);let selected=horses.find(h=>h.id===new URLSearchParams(location.search).get('horse'))||horses[0],metres=800,plan='stalker';const eventSeed=crypto.getRandomValues(new Uint32Array(1))[0];const track=eventSeed%3===0?'soft':'firm';
 let jockeyId='stable',bookingDone=false;
 let phase='lobby',race=null,command={pace:'cruise',lane:0,burst:false},inputs=[],currentRun=null,lastRun=null,paused=false,accumulator=0,countdown=0,finishWait=0,announcementUntil=0,uiClock=0,lastPosition=1,finalCalled=false,slowmo=0,replayAt=0,replaySpeed=1,camIndex=0,dayClock=0,previewOpen=false;
 let soundEnabled=false,audio=null,noise=null,lastHoof=0;
@@ -20,7 +20,7 @@ function renderJockeys(){const live=latestFarm(),roster=rosterFor(live),selected
 function readHistory(){try{const h=JSON.parse(localStorage.getItem('meadow-race-history-v1'));return Array.isArray(h)?h.slice(0,10):[];}catch{return [];}}
 function timeLabel(t){if(!Number.isFinite(t))return '—';const min=Math.floor(t/60),s=(t%60).toFixed(2).padStart(5,'0');return `${String(min).padStart(2,'0')}:${s}`;}
 function renderProfile(){
- $('#horse-picker').innerHTML=horses.map(h=>`<button data-horse="${escape(h.id)}" class="${h.id===selected.id?'selected':''}">${escape(h.name)}<small>${h.id==='dawn'?'ENDURANCE SPECIALIST':'EXPLOSIVE FINISHER'}</small></button>`).join('');
+ $('#horse-picker').innerHTML=horses.map(h=>`<button data-horse="${escape(h.id)}" class="${h.id===selected.id?'selected':''}">${escape(h.name)}<small>${h.parentIds?'HOME-BRED · GENERATION '+h.generation:h.id==='dawn'?'ENDURANCE SPECIALIST':'EXPLOSIVE FINISHER'}</small></button>`).join('');
  $('#profile').innerHTML=`<div class="stats">${['speed','stamina','power'].map(k=>`<label>${k.toUpperCase()}<b>${selected[k]}</b><progress value="${selected[k]}" max="100"></progress></label>`).join('')}</div><p class="condition">3D coat identity: ${horseCoatId(selected).replaceAll('-',' ')} · stable & race track</p><div class="condition"><span>Energy <b>${selected.energy}%</b></span><span>Condition <b>${selected.condition}%</b></span></div>`;
  for(const b of document.querySelectorAll('[data-horse]'))b.onclick=()=>{selected=horses.find(h=>h.id===b.dataset.horse);world?.setHorseProfile?.(selected);renderProfile();};
 }
@@ -56,7 +56,7 @@ addEventListener('keydown',e=>{if(e.target.matches('button,select,input,summary'
 addEventListener('visibilitychange',()=>{if(document.hidden)setPaused(true);});
 addEventListener('racecontextlost',()=>{setPaused(true);show('#error',true);$('#error').textContent='Graphics paused. Waiting for the browser to restore the stadium. If it does not recover, reload this page; your farm save is safe.';});
 function start(){
- if(!world)return;if(!availableJockey(latestFarm(),jockeyId)){announce('CHOOSE AN AVAILABLE JOCKEY');return;}bookingDone=false;const seed=eventSeed;currentRun={version:RULES_VERSION,horse:JSON.parse(JSON.stringify(selected)),metres,seed,options:{plan,track,jockeyId},raceId:crypto.randomUUID(),inputs:[]};race=createRace(currentRun.horse,metres,seed,currentRun.options);inputs=[{tick:0,pace:'cruise',lane:0,burst:false}];command={pace:'cruise',lane:0,burst:false};
+ if(!world)return;const currentHorse=racingHorses(latestFarm()).find(h=>h.id===selected.id);if(!currentHorse){announce('THIS HORSE IS TOO YOUNG OR RESTING');return;}selected=currentHorse;if(!availableJockey(latestFarm(),jockeyId)){announce('CHOOSE AN AVAILABLE JOCKEY');return;}bookingDone=false;const seed=eventSeed;currentRun={version:RULES_VERSION,horse:JSON.parse(JSON.stringify(selected)),metres,seed,options:{plan,track,jockeyId},raceId:crypto.randomUUID(),inputs:[]};race=createRace(currentRun.horse,metres,seed,currentRun.options);inputs=[{tick:0,pace:'cruise',lane:0,burst:false}];command={pace:'cruise',lane:0,burst:false};
  phase='parade';dayClock=0;countdown=3.8;paused=false;accumulator=0;finishWait=0;lastPosition=1;finalCalled=false;slowmo=0;world.cameraMode(cams[camIndex]);$('#camera').textContent='Camera: '+cams[camIndex];
  show('#race-day',true);show('#skip-parade',true);show('#preview-toggle',false);show('#field',false);show('#setup',false);show('#venue',false);show('#hud',false);show('#results',false);show('#pause',true);show('#replay-label',false);show('.race-controls',true);$('#burst').disabled=false;$('#burst').innerHTML='<small>ONE CHANCE. MAKE IT COUNT.</small><b>✦ SKYBREAK</b>';$('#lane').textContent='1';for(const b of document.querySelectorAll('[data-pace]'))b.classList.toggle('selected',b.dataset.pace==='cruise');$('#horse-name').textContent=selected.name+' · '+jockeyById(jockeyId).name;$('#pause').textContent='Pause';announce('THE SKYLINE CUP • PARADE OF CONTENDERS',2.2);activateAudio();updateHUD();
 }

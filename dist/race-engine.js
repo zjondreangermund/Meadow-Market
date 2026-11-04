@@ -4,6 +4,7 @@ export const STEP=1/60, RULES_VERSION='skyline-5';
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function rng(seed){let n=seed>>>0;return ()=>((n=(Math.imul(n,1664525)+1013904223)>>>0)/4294967296);}
 export function createRace(horse,metres=800,seed=1,options={}){
+ if(horse.lifeStage==='foal'||horse.pregnancyId)throw Error('Only adult horses who are not expecting foals can race.');
  if(![400,800,1600].includes(metres))throw Error('Choose 400, 800 or 1600 metres.');
  const random=rng(seed),base=[['sirocco','Sirocco',78,65,83],['lumen','Moon Lumen',71,89,64],['comet','Red Comet',83,62,80],['tempest','Tempest Blue',75,79,74],['halo','Golden Halo',77,75,77]];
  const entrants=[{...horse,id:'player',stableId:horse.id},...base.map(([id,name,speed,stamina,power])=>({id,name,speed,stamina,power,energy:100,condition:80}))];

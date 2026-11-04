@@ -14,3 +14,15 @@ console.log('PASS: all species use original animated models; exact visual-mode c
 
 for(const a of game.animals.filter(a=>a.type==='chicken')){const head=a.g.getObjectByName('NativeHenHead');assert.ok(head.children.length>0);a.animateBird(.1,true,true);assert.ok(head.rotation.x>0);assert.ok(a.legs.some(l=>Math.abs(l.rotation.x)>.01));}
 assert.ok(game.animals.filter(a=>a.type==='pig').every(a=>a.model&&!a.model.userData.hdVisuals));
+
+const {breedHorses}=await import('../dist/breeding.js');
+const pregnancy=breedHorses(game.state,'dawn','copper',{seed:123});game.state.day=pregnancy.dueDay;
+await globalThis.meetFoal(pregnancy.id);
+const baby=game.animals.find(a=>a.g.userData.appearanceKey===pregnancy.foal.id);
+assert.ok(baby?.nativeRig&&baby.model,'new foal loads the working animated horse rig');assert.equal(baby.g.scale.x,.58);assert.equal(game.animals.length,10);
+assert.ok(document.querySelector('#modalbody').innerHTML.includes('WELCOME TO THE MEADOW'));assert.equal(document.querySelector('dialog').className,'foal-reveal');
+assert.equal(document.querySelector('#asset-quality').textContent.includes('horse: 3/3 animated'),true);
+await globalThis.meetFoal(pregnancy.id);assert.equal(game.animals.length,10);assert.equal(game.state.horses.length,3);
+globalThis.openHorses(pregnancy.foal.id);assert.ok(document.querySelector('#modalbody').innerHTML.includes('permanent coat'));assert.ok(!document.querySelector('#modalbody').innerHTML.includes('setHorseCoat'));
+game.state.day+=7;globalThis.visitFoal(pregnancy.foal.id);await new Promise(r=>setImmediate(r));assert.equal(baby.g.scale.x,1);
+console.log('PASS: saved birth spawns one independent animated foal, baby scale and adult growth, reveal UI, locked coat and model status. GPU pixels unverified.');

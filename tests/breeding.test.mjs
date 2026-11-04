@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {fresh,demand,HERDS} from '../dist/economy.js';
+import {horsesFor,racingHorses,trainHorse,isAdultHorse} from '../dist/horses.js';
+import {breedHorses,revealFoal,nameFoal,readyBirths} from '../dist/breeding.js';
+import {animalIdentity} from '../dist/animal-identity.js';
+const s=fresh();horsesFor(s);s.horses[0].speed=90;
+const snapshot=JSON.stringify(s);s.coins=0;const broke=JSON.stringify(s);assert.throws(()=>breedHorses(s,'dawn','copper'),/coins/);assert.equal(JSON.stringify(s),broke);Object.assign(s,JSON.parse(snapshot));
+const p=breedHorses(s,'dawn','copper',{seed:42});assert.equal(s.coins,600);assert.equal(s.inventory.feed,18);assert.equal(s.inventory.water,14);assert.equal(s.horses[0].energy,70);assert.equal(racingHorses(s).length,1);assert.throws(()=>trainHorse(s,'dawn','power'),/pregnancy/);assert.throws(()=>revealFoal(s,p.id),/not ready/);
+for(const k of ['speed','stamina','power']){const t=p.foal.inheritance[k];assert.equal(t.value,Math.round(t.average+t.variation));assert.ok(Math.abs(t.variation)<=5);}assert.ok(!s.horses.some(h=>h.coatId===p.foal.coatId));
+const planned=JSON.stringify(p.foal);const loaded=JSON.parse(JSON.stringify(s));loaded.day=4;assert.equal(readyBirths(loaded).length,1);assert.equal(JSON.stringify(loaded.pregnancies[0].foal),planned);
+const f=revealFoal(loaded,p.id);assert.equal(f.bornDay,4);assert.equal(loaded.horses.length,3);assert.equal(revealFoal(loaded,p.id).id,f.id);assert.equal(loaded.horses.length,3);assert.equal(loaded.horses[0].pregnancyId,undefined);assert.equal(demand(HERDS[3],loaded).feed,15);assert.equal(racingHorses(loaded).length,2);assert.throws(()=>trainHorse(loaded,f.id,'speed'),/Foals/);
+const original={coat:f.coatId,seed:f.appearanceSeed,stats:[f.speed,f.stamina,f.power]};nameFoal(loaded,f.id,'Willow Star');f.coatId='anything';horsesFor(loaded);assert.equal(f.coatId,original.coat);assert.equal(f.appearanceSeed,original.seed);assert.deepEqual([f.speed,f.stamina,f.power],original.stats);assert.throws(()=>nameFoal(loaded,f.id,'<script>'),/letters/);
+const cow=animalIdentity(loaded,'cow','Daisy',0);assert.deepEqual(animalIdentity(loaded,'cow','Daisy',1),cow);const roundtrip=JSON.parse(JSON.stringify(loaded));assert.deepEqual(animalIdentity(roundtrip,'cow','Daisy',1),cow);
+loaded.day=11;assert.ok(isAdultHorse(f,loaded.day));assert.equal(racingHorses(loaded).length,3);loaded.horses.forEach(h=>h.energy=100);assert.doesNotThrow(()=>breedHorses(loaded,'dawn','copper',{seed:43}));
+loaded.horses.forEach(h=>h.energy=100);f.sex='mare';const beforeFamily=JSON.stringify(loaded);assert.throws(()=>breedHorses(loaded,f.id,'copper'),/family/);assert.equal(JSON.stringify(loaded),beforeFamily);
+const full=fresh();horsesFor(full);for(let i=0;i<6;i++)full.horses.push({...full.horses[1],id:'extra-'+i});const beforeFull=JSON.stringify(full);assert.throws(()=>breedHorses(full,'dawn','copper'),/full/);assert.equal(JSON.stringify(full),beforeFull);
+console.log('PASS: permanent identities, atomic breeding costs, inherited stats, deterministic births, no duplicate foals, names, growth, race/training gates, family and capacity limits.');
