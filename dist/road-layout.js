@@ -1,4 +1,4 @@
-import {FARMS} from './regional-farms.js?v=landscape13';
+import {FARMS} from './regional-farms.js?v=simulation15';
 // One shared road surface prevents coplanar overlaps at county/region junctions.
 export const ROADS=[[-48,0,7,152],[64,0,7,152],[6,-36,112,7],[6,44,112,7],[-72,-36,48,7],[-72,4,48,7],[-72,28,48,7],[-90,-16,5,96],[-81,-45,18,4],[82,62,36,7],[-132,30,7,300],[144,30,7,300],[6,-100,276,7],[6,164,276,7],[-90,44,84,7],[104,44,80,7],...FARMS.map(p=>[(p.x+(p.x<0?-132:144))/2,p.approach.z,Math.abs(p.x-(p.x<0?-132:144))+8,5])].map(([x,z,w,d])=>({x,z,w,d}));
 export const onRoad=(x,z)=>ROADS.some(r=>Math.abs(x-r.x)<r.w/2+.001&&Math.abs(z-r.z)<r.d/2+.001);

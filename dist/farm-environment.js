@@ -1,0 +1,3 @@
+import * as T from './three.module.js';
+// A small baked sky reflection texture supplies missing PBR reflections without extra scene renders.
+export function installFarmEnvironment(scene){const w=256,h=128,data=new Uint8Array(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const t=y/h,sky=t<.5,glow=Math.exp(-((x/w-.7)**2/.006+(t-.28)**2/.012))*38;const c=sky?[92+(t*2)*100,140+t*90,175+t*65]:[90,104,77];data.set([Math.min(255,c[0]+glow),Math.min(255,c[1]+glow),Math.min(255,c[2]+glow),255],(y*w+x)*4);}const texture=new T.DataTexture(data,w,h);texture.colorSpace=T.SRGBColorSpace;texture.mapping=T.EquirectangularReflectionMapping;texture.needsUpdate=true;scene.environment=texture;return texture;}

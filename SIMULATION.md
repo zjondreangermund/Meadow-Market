@@ -1,0 +1,31 @@
+# Production and growing simulation — Visual v15
+
+Updates the existing browser save (`meadow-cycle-v2`) additively. Existing stock, cash, horse records, coats, vehicles, cargo and exchange orders are retained.
+
+## Independent crop beds
+
+Open the kitchen garden or More → Crop beds. Each of four beds has its own crop, seed cost, watering, timer and harvest. Maize takes 24 real hours, wheat 18, sunflower 36 and vegetables 12. Growth is continuous while open and catches up from saved timestamps after closing. Next day advances the equivalent of 24 growing hours. Water is required to start growing. Two animal fertiliser units shorten one bed's cycle by 20%, once per planting. Only the selected bed displays its crop.
+
+The old single maize planting becomes bed 1, retaining its harvest. Other beds start empty. New finite seed and produce markets are added once; existing orders and escrow stay intact.
+
+County fields and regional crop farms show progressive planted rows. Purchased orchards have distinct apple, pear, orange and plum trees, which mature over 72 growing hours and retain their trees after fruit collection. New fruit grows during subsequent production cycles. Fruit remains the existing common fruit-feed economy item.
+
+## Grain trailer and mill route
+
+1. Visit the farm garage and buy the 60-unit grain trailer for 250 coins (Production → Trailer). It is parked at −41, 17.
+2. Reverse the tractor or pickup's rear hitch close to its drawbar and select Hitch. The tractor's cultivator is stowed while towing. Unhitch before tractor field work.
+3. Centre the **trailer**, rather than the tow vehicle, in the farm storage bay at −23, 26. Load up to 20 maize.
+4. Drive to the home mill bay at −22.3, 10, or County Mill at 75, 28. Tip maize into the intake. The home mill requires the Feed miller role; the county mill requires ownership.
+5. Start processing: home mill uses 10 maize and 1 power, taking 30 seconds; county mill uses 20 maize and 2 power, taking 60 seconds. Grain must first be delivered to the intake. Power represents the grid.
+6. Centre the trailer below the outlet and load feed. The visible grain stream fills the trailer over six seconds.
+7. Return to farm storage and unload. Only then is this feed available for animal care and trading.
+
+Transfers commit once after six seconds. Moving the trailer cancels without consuming source goods. Saved trailers retain cargo when detached or reloaded. Legacy county mill jobs become pending output in that mill. Milling no longer instantly credits feed to farm inventory.
+
+Use Show this loading bay / trailer for a close camera view. Vehicle entry/exit remains the nearby button or E. Trailer payload reduces towing speed. Trailer wheels, drawbar following, tipping bed and grain level animate separately. Collision checks cover the tow vehicle and trailer. The loading lane, gantry supports and storage tank have checked clearances.
+
+## Rendering and limits
+
+Vehicles retain the bundled metre-scale GLB meshes and native wheel pivots, with paint/glass tuning, contact shadows and a baked sky reflection texture for PBR surfaces. Fixed industrial detail is batched by material; growing fields use instanced meshes. The grain trailer and industrial loading structures are local geometry without third-party network requests.
+
+Automated scene and rule checks cover growth, save migration, exchange preservation, physical loading, processing, cargo conservation, real controller towing and loading clearance. The available cloud browser lacks WebGL, so rendered pixels, touch driving and actual GPU performance remain unverified. This is a local solo simulation; it does not add a multiplayer server.

@@ -1,4 +1,4 @@
-import {depth,ensureExchange,reserved,placeOrder,cancelOrder} from './exchange.js';
+import {depth,ensureExchange,reserved,placeOrder,cancelOrder} from './exchange.js?v=simulation15';
 const fmt=n=>Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}),quote=p=>fmt(p/100),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createExchangeUI({state,goods,modal,save,toast}){let good='maize',side='buy',type='limit',draftPrice='',draftQty='10';
  function render(selected){if(selected&&goods[selected]){good=selected;draftPrice='';}const e=ensureExchange(state),book=depth(state,good),locked=reserved(state),bestAsk=book.asks[0]?.price,bestBid=book.bids[0]?.price;const price=draftPrice||String(((side==='buy'?bestAsk:bestBid)||bestAsk||bestBid||100)/100),orders=e.orders.filter(o=>o.owner==='player'&&o.remaining&&o.status==='open');

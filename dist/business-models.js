@@ -13,10 +13,12 @@ export function createBusiness(kind,{w=14,d=10,h=5}={}){
  function roof(x,z,width,depth,y){const half=width/2,pitch=.36;for(const side of [-1,1]){const panel=box(half/Math.cos(pitch),.14,depth,'#5f706c',x+side*half/2,y+Math.tan(pitch)*half/2,z,shell,.6);panel.rotation.z=-side*pitch;}}
  box(13.7,.35,9.7,'#8d9086',0,.18,0);
  if(kind==='mill'){
-  box(8.6,5.5,8.4,'#b98670',-2,3,0);roof(-2,0,9.3,9,5.9);
+  box(8.6,5.5,8.4,'#bec6bc',-2,3,0);for(let i=0;i<18;i++)box(.055,5.4,.08,'#899b95',-6.15+i*.47,3,4.24);box(2.8,3.5,.14,'#526c69',-2,2,4.27);roof(-2,0,9.3,9,5.9);
   box(2.5,3.5,.13,'#5b7775',-2,2,4.26);for(let i=0;i<6;i++)box(2.5,.045,.17,'#405b5a',-2,.55+i*.55,4.35);
-  for(const x of [-5,.7]){box(1.5,1.5,.14,'#74969b',x,4.15,4.28);for(const sx of [-.8,0,.8])box(.07,1.65,.2,'#d6d7c6',x+sx,4.15,4.32);box(1.7,.1,.28,'#d6d7c6',x,3.35,4.35);}
+  for(const x of [-5,.7]){box(1.5,.8,.14,'#74969b',x,4.5,4.28);for(const sx of [-.8,0,.8])box(.07,1.65,.2,'#d6d7c6',x+sx,4.15,4.32);box(1.7,.1,.28,'#d6d7c6',x,3.35,4.35);}
   for(const z of [-2,1.7]){cylinder(1.45,1.45,6.8,'#a7b2b0',4.9,3.65,z);cylinder(0,1.5,1.1,'#b3bcba',4.9,7.6,z);for(let i=0;i<5;i++)cylinder(1.48,1.48,.06,'#657c7b',4.9,1.2+i*1.25,z);pipe([4.9,7,z],[1.3,6,z]);}
+  // Industrial service catwalk and safety rail between process silos.
+  box(3.1,.16,6.2,'#657b76',4.6,5.1,-.2);for(const side of [-1,1]){for(let i=0;i<6;i++)box(.05,1,.05,'#d6bb59',4.6+side*1.45,5.65,-2.8+i*1.05);box(.05,.06,6.2,'#d6bb59',4.6+side*1.45,6.1,-.2);}for(let i=0;i<4;i++)box(1.1,.07,1,'#8b9b94',-5,2+i*.35,4.2-i*.3);
   cylinder(.6,.78,9.8,'#736b5f',-5.2,5.05,-2.8,.05);cylinder(.82,.82,.22,'#424c4b',-5.2,10.05,-2.8);for(let i=0;i<14;i++)pipe([-5.95,.7+i*.62,-2.8],[-5.95,.7+i*.62,-2.3],.035);pipe([-5.95,.5,-2.8],[-5.95,9.2,-2.8],.045);pipe([-5.95,.5,-2.3],[-5.95,9.2,-2.3],.045);
   for(let i=0;i<4;i++){const sack=new T.Mesh(new T.SphereGeometry(1,10,8),material('#c8b58b'));sack.scale.set(.36,.58,.3);sack.position.set(-.1+i*.7,.8,4.25);shell.add(sack);}
   shell.add(smoke);for(let i=0;i<10;i++){const p=new T.Sprite(new T.SpriteMaterial({map:smokeMap,transparent:true,depthWrite:false,opacity:0}));p.userData.age=i/10;smoke.add(p);}

@@ -1,5 +1,5 @@
 import * as T from './three.module.js';
-import {FIELD,cropStage} from './crops.js?v=garden131';
+import {FIELD,cropStage,cropProgress,CROPS} from './crops.js?v=simulation15';
 // Original scene detail; no external textures or per-frame allocations.
 export function plantMaize({scene,box,cyl,ball,mats}){
  const crops=[];const leafMat=new T.MeshStandardMaterial({color:'#548746',roughness:.8,side:T.DoubleSide});
@@ -8,8 +8,14 @@ export function plantMaize({scene,box,cyl,ball,mats}){
  for(let j=0;j<7;j++){let g=new T.Group();g.position.set(x+(j%2)*.12,.34,11.7+j*1.2);g.rotation.y=i*.9+j*1.7;scene.add(g);cyl(.043,1.6,'#668943',0,.8,0,g);
  for(let k=0;k<6;k++){let pivot=new T.Group();pivot.position.y=.28+k*.2;pivot.rotation.y=k*2.4;g.add(pivot);let leaf=new T.Mesh(leafGeo,leafMat);leaf.rotation.z=.25-k*.08;leaf.rotation.x=.25;leaf.castShadow=true;pivot.add(leaf);}
  const fruit=new T.Group();g.add(fruit);const kernels=new T.InstancedMesh(new T.SphereGeometry(.035,7,5),new T.MeshStandardMaterial({color:'#f1d36f',roughness:.9}),24);kernels.castShadow=true;fruit.add(kernels);let kernelIndex=0;for(let side of [-1,1]){let cob=new T.Group();cob.position.set(side*.12,.95+side*.1,0);cob.rotation.z=-side*.3;fruit.add(cob);ball(.12,'#dcb94f',0,0,0,cob,[.7,2.1,.7]);cob.updateMatrix();for(let k=0;k<4;k++)for(let c=0;c<3;c++){const m=new T.Matrix4().makeTranslation(Math.sin(c*2.1)*.08,-.14+k*.085,Math.cos(c*2.1)*.08);kernels.setMatrixAt(kernelIndex++,m.premultiply(cob.matrix));}}
- for(let k=0;k<4;k++){let tassel=box(.025,.32,.025,'#d3bc75',Math.sin(k*2)*.07,1.68,Math.cos(k*2)*.07,g);tassel.rotation.z=Math.sin(k*2)*.4;}g.userData.fruit=fruit;g.visible=false;crops.push(g);}}
- return {crops,beds,bounds:FIELD,update(state,time=0){const stage=state.role==='grower'?cropStage(state):'empty';for(let i=0;i<crops.length;i++){const g=crops[i];g.visible=stage!=='empty';const scale=stage==='planted'?.15:stage==='growing'?.52:1;g.scale.set(scale,scale,scale);g.userData.fruit.visible=stage==='ready';g.rotation.z=stage==='empty'?0:Math.sin(time*1.4+i*.8)*.025;}}};
+ for(let k=0;k<4;k++){let tassel=box(.025,.32,.025,'#d3bc75',Math.sin(k*2)*.07,1.68,Math.cos(k*2)*.07,g);tassel.rotation.z=Math.sin(k*2)*.4;}g.userData.fruit=fruit;g.userData.bed=i;g.userData.maizeChildren=[...g.children];g.visible=false;crops.push(g);}}
+ // Alternate plants use their own geometry, retained inside their assigned bed.
+ for(const g of crops){const variants={};for(const type of ['wheat','sunflower','vegetables']){const plant=new T.Group();g.add(plant);variants[type]=plant;
+ if(type==='vegetables'){for(let i=0;i<5;i++){const leaf=ball(.22,'#517c40',Math.sin(i*1.4)*.12,.18,Math.cos(i*1.4)*.12,plant,[1,.55,1]);leaf.rotation.z=i*.5;}}
+ else{const h=type==='wheat'?1:2.1;cyl(.025,h,'#71914c',0,h/2,0,plant);if(type==='wheat'){for(let i=0;i<7;i++)ball(.055,'#d8be77',Math.sin(i*2)*.04,.65+i*.045,Math.cos(i*2)*.04,plant,[1,1.5,1]);}else{ball(.16,'#694e31',0,1.95,0,plant,[1,1,.4]);for(let i=0;i<12;i++)ball(.1,'#f1c847',Math.sin(i*Math.PI/6)*.23,1.95+Math.cos(i*Math.PI/6)*.23,0,plant,[.7,1.6,.3]);for(let i=0;i<4;i++)ball(.2,'#527c45',Math.sin(i*2)*.13,.4+i*.3,0,plant,[1.5,.35,.8]);}}
+ }g.userData.variants=variants;}
+ return {crops,beds,bounds:FIELD,update(state,time=0){for(let i=0;i<crops.length;i++){const g=crops[i],bed=g.userData.bed,record=state.cropBeds?state.cropBeds[bed]:bed===0?state.crop:null,stage=cropStage(state,bed),type=record?.type||'maize',p=cropProgress(state,bed),scale=stage==='planted'?.045:.06+.94*p;g.visible=stage!=='empty';g.scale.setScalar(scale);for(const c of g.userData.maizeChildren)c.visible=type==='maize';g.userData.fruit.visible=type==='maize'&&p>.65;for(const [key,plant]of Object.entries(g.userData.variants))plant.visible=key===type;g.rotation.z=Math.sin(time*1.4+i*.8)*.018;}}};
+
 }
 export function detailBuildings({worldBuildings,box,cyl,ball,mats}){
  for(const b of worldBuildings){let {g,w,d}=b;box(w+.25,.3,d+.25,'#8e8774',0,.3,0,g);const h=b.label==='THE RED BARN'?4.8:b.label==='FEED MILL'?2.5:2.2;

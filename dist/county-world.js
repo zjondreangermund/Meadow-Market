@@ -1,9 +1,11 @@
+import {createOrchard,createFieldCrop} from './orchard-models.js?v=simulation15';
+import {growthProgress,growthReady} from './growth.js?v=simulation15';
 import {buildRoads} from './road-world.js?v=vehicles14';
-import {createBusiness} from './business-models.js?v=vehicles14';
-import {createFarmVehicle} from './vehicle-models.js?v=vehicles14';
+import {createBusiness} from './business-models.js?v=simulation15';
+import {createFarmVehicle} from './vehicle-models.js?v=simulation15';
 import {treeGrove,detailHouse,contactShadow} from './landscape-assets.js?v=landscape13';
 import * as T from './three.module.js';
-import {PLOTS,DESTINATIONS,ensureCounty} from './county-sim.js?v=county11';
+import {PLOTS,DESTINATIONS,ensureCounty} from './county-sim.js?v=simulation15';
 export function buildCounty({scene,register,block,mats,mobile=false}){
  let batchingRoads=true;const roadMeshes=[];const materials=new Map(),geo=new T.BoxGeometry(1,1,1),wheelGeo=new T.CylinderGeometry(.42,.42,.25,10),chunks=[],plots=new Map();
  const material=c=>{if(!materials.has(c))materials.set(c,new T.MeshStandardMaterial({color:c,roughness:.88,map:null}));return materials.get(c);};
@@ -29,19 +31,20 @@ export function buildCounty({scene,register,block,mats,mobile=false}){
  for(const p of PLOTS){const root=chunk(p.name,p.x,p.z,g=>{
   const ground=cube(g,p.w,.04,p.d,p.kind==='field'?'#876548':'#9eaf77',p.x,.25,p.z);
   const furrows=[];const growth=new T.Group();g.add(growth);const ready=new T.Group();g.add(ready);cube(ready,.12,2.7,.12,'#aa9063',p.x,1.6,p.z);cube(ready,1,.3,1,'#f3d57d',p.x,3,p.z);
-  if(p.kind==='field'){for(let i=0;i<8;i++){furrows.push(cube(g,p.w-2,.12,.35,'#5d4738',p.x,.32,p.z-p.d/2+1.6+i*2.3));cube(growth,p.w-3,.75,.6,'#86a64f',p.x,.7,p.z-p.d/2+1.6+i*2.3);}}
-  if(p.kind==='orchard'){for(let i=0;i<8;i++){const x=p.x+(i%4-1.5)*5,z=p.z+(i<4?-4:4);cube(growth,.5,3,.5,'#92724f',x,1.7,z);const crown=new T.Mesh(new T.IcosahedronGeometry(2.2,1),material('#6a9253'));crown.position.set(x,4,z);growth.add(crown);}}
+  if(p.kind==='field'){for(let i=0;i<8;i++){furrows.push(cube(g,p.w-2,.12,.35,'#5d4738',p.x,.32,p.z-p.d/2+1.6+i*2.3));}}
+  if(p.kind==='field')growth.add(createFieldCrop(p.x,p.z,p.w,p.d));
+  let orchard;if(p.kind==='orchard'){orchard=createOrchard(p.x,p.z);g.add(orchard.root);}
   if(p.kind==='well'){house(g,p.x+3,p.z,'#c1c3a8',9,7,3);const tank=new T.Mesh(new T.CylinderGeometry(2.4,2.4,5,14),material('#9bbdb9'));tank.position.set(p.x-6,2.8,p.z);g.add(tank);cube(growth,5,.3,.3,'#708b85',p.x-2,1,p.z);}
   if(p.kind==='mill'){house(g,p.x,p.z,'#baad88',14,10,5);cube(growth,2.4,4,2.4,'#d7cfb2',p.x+8,2.2,p.z);}
   for(const x of [-1,1])for(const z of [-1,1])cube(g,.18,1.5,.18,'#c9b486',p.x+x*p.w/2,.95,p.z+z*p.d/2);
-  label(g,p.name.toUpperCase(),p.x,p.kind==='mill'?12:8,p.z);plots.set(p.id,{root:g,ground,growth,ready,furrows});
+  label(g,p.name.toUpperCase(),p.x,p.kind==='mill'?12:8,p.z);plots.set(p.id,{root:g,ground,growth,ready,furrows,orchard});
  });}
  // Procedural border groves share geometry/materials; one instanced draw per grove.
  for(const [cx,cz]of [[-84,58],[42,-70],[88,-62],[16,69]])chunk('County grove',cx,cz,g=>treeGrove(g,cx,cz,18,11));
- const vans=[];for(let i=0;i<2;i++){const actor=createFarmVehicle('pickup');actor.root.name='County delivery traffic';scene.add(actor.root);vans.push({root:actor.root,actor,t:i*150});}
+ const vans=[];for(let i=0;i<2;i++){const actor=createFarmVehicle('pickup');actor.root.name='County delivery traffic';scene.add(actor.root);actor.ready.then(()=>actor.root.traverse(o=>{if(o.isMesh)o.castShadow=false;}));vans.push({root:actor.root,actor,t:i*150});}
  const loop=[[-46,-34],[62,-34],[62,42],[-46,42]],lengths=loop.map((p,i)=>Math.hypot(p[0]-loop[(i+1)%4][0],p[1]-loop[(i+1)%4][1])),total=lengths.reduce((a,b)=>a+b,0);
  function update(dt,player,state,focus=player){const c=ensureCounty(state);for(const b of businesses)b.update(dt);for(const ch of chunks){const near=Math.min(Math.hypot(player.x-ch.x,player.z-ch.z),Math.hypot(focus.x-ch.x,focus.z-ch.z))<(mobile?66:90);if(near&&!ch.loaded){ch.build(ch.group);ch.loaded=true;}ch.group.visible=near;}
-  for(const [id,v]of plots){const r=c.plots[id];v.ground.visible=!!r;for(const f of v.furrows)f.visible=!!r;v.growth.visible=!!r&&(PLOTS.find(p=>p.id===id).kind==='orchard'?r.established:!!r.job);v.ready.visible=!!r?.job&&state.day>=r.job.readyDay;if(PLOTS.find(p=>p.id===id).kind==='field')v.growth.scale.y=r?.job?Math.min(1,.2+.4*(state.day-r.job.startedDay)):.2;}
+  for(const [id,v]of plots){const r=c.plots[id];v.ground.visible=!!r;for(const f of v.furrows)f.visible=!!r;v.growth.visible=!!r&&!!r.job;v.orchard?.update(r,state.day);v.ready.visible=growthReady(r?.job,state.day);if(PLOTS.find(p=>p.id===id).kind==='field')v.growth.scale.y=r?.job ? .04+.96*growthProgress(r.job,state.day):.2;if(PLOTS.find(p=>p.id===id).kind==='field')v.growth.position.y=.3*(1-v.growth.scale.y);}
   for(const v of vans){v.actor.update(dt*4);v.t=(v.t+dt*4)%total;let t=v.t,i=0;while(t>lengths[i]&&i<3){t-=lengths[i];i++;}const a=loop[i],b=loop[(i+1)%4],f=t/lengths[i];v.root.position.set(a[0]+(b[0]-a[0])*f,.22,a[1]+(b[1]-a[1])*f);v.root.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);v.root.visible=Math.hypot(v.root.position.x-player.x,v.root.position.z-player.z)<(mobile?65:100);}
  }
  return {chunks,plots,vans,update};
