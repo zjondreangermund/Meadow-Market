@@ -1,6 +1,6 @@
 import * as T from './three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-export const WORLD={minX:-32,maxX:44,minZ:-27,maxZ:28,width:82,depth:62,centerX:6};
+export const WORLD={minX:-96,maxX:108,minZ:-84,maxZ:84,width:210,depth:174,centerX:6};
 export const TRAINING={x:31,z:-5,approach:{x:19,z:8}};
 export function expandFarm({scene,box,cyl,ball,mats,block,register,sign}){
  const market=new T.Group();market.position.set(-27,0,-12);scene.add(market);const service=register(market,{kind:'market',x:-27,z:-12,approach:{x:-27,z:-6}});block(-27,-12,8,7);sign('MEADOW EXCHANGE',-27,6.5,-12);
