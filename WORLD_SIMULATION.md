@@ -43,3 +43,23 @@ Accept a village request, park the pickup at the garage and load it through **Ca
 Both vehicles use the existing power commodity: 1 power restores up to 25 battery points at the garage. Recovery costs 2 power and returns the vehicle and its cargo to its garage bay. Positions, battery, ownership and cargo save regularly and on page exit. Reload resumes on foot rather than automatically accelerating a vehicle.
 
 Vehicles use lightweight procedural geometry, with separate steering and wheel-spin pivots. Static scenery and other player vehicles block driving. Ambient county traffic is still decorative and has no full traffic collision or AI road rules. Cab interiors and a seated character animation are not implemented. Actual WebGL visuals and Android performance remain unverified in the current test browser.
+
+
+## Graphics, weather and regional estates — World v13
+
+The walkable region now spans X −248…260 and Z −220…220: 508 × 440 game units, about 6.5 times the previous county area. The existing home county, garages, roads and businesses remain in place. Regional roads connect to four complete estates with permanent parcel IDs.
+
+| Farm | Region | Price | Inputs per cycle | Output | Farm days |
+| --- | --- | ---: | --- | --- | ---: |
+| Riverbend Crop Farm | West Valley | 1,800 | 12 seeds + 18 water | 90 maize | 2 |
+| Suncrest Orchard | East Ridge | 2,200 | 24 water + 2 power | 46 fruit | 3 |
+| Brookside Dairy Farm | South Meadows | 2,800 | 12 feed + 20 water + 2 fruit | 24 milk + 8 fertiliser | 1 |
+| Oakridge Boarding Farm | Oak Highlands | 3,000 | 16 feed + 24 water + 4 fruit | 12 condition units + 8 fertiliser | 2 |
+
+Open **World** to inspect the estates, preview one in the actual 3D scene, or walk to its entrance. On phones, use **More → Regional farms**. Purchase, production and collection use the existing arrival/work queue. Drive and park before using on-foot actions. The dairy and boarding estates have separate resident animated cattle/horses using the working original rigs; these do not replace or reset the home animals or personal racing stable. Estate residents have fixed coat identities. Ownership, production timers and collected output survive reloads. No rent or automatic coin deduction is introduced.
+
+The former cone groves are replaced by rounded instanced tree canopies and trunks. Village buildings receive textured materials, corrected roof slopes, framed windows, trim, porches, chimneys and soft ground contact. Continuous rolling terrain extends beyond the playable boundary so the world no longer ends against an empty blue background. District and estate detail loads on camera/player approach; roads and vegetation retain batching/instancing.
+
+Open **Sky** or **More → Sky & weather** for a gradient sky with moving cloud banks, clear weather, passing clouds, rain showers, storm fronts and mist. Automatic patterns are deterministic by farm day and saved seed, or the player can choose a visual override. Lighting, fog and precipitation transition with the forecast. Weather does not change existing crop timers, costs or horse statistics in this release. **Scenic horizon view** lowers the camera so the horizon and sky can be seen.
+
+The expanded map and stable estate IDs are a regional foundation, not a multiplayer server. Account-based ownership, authoritative shared parcels, player presence, synchronisation and further region streaming still need backend implementation. No supported player-count claim is made. Actual WebGL appearance and Android frame rates still require device verification; automated scene checks are not rendered screenshot validation.

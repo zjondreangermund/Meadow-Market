@@ -1,0 +1,15 @@
+import * as T from './three.module.js';
+const bark=new T.MeshStandardMaterial({color:'#786548',roughness:1}),foliage=new T.MeshStandardMaterial({color:'#75905b',roughness:1}),trunkGeo=new T.CylinderGeometry(.22,.35,3.2,7),leafGeo=new T.SphereGeometry(1,8,6);
+export function treeGrove(parent,cx,cz,count=18,spread=11){const trunks=new T.InstancedMesh(trunkGeo,bark,count),leaves=new T.InstancedMesh(leafGeo,foliage,count*4),dummy=new T.Object3D();trunks.name='Instanced tree trunks';leaves.name='Rounded woodland canopy';for(let i=0;i<count;i++){const x=cx+Math.sin(i*4.1)*spread,z=cz+Math.cos(i*3.7)*spread*.7,k=.8+(i%4)*.13;dummy.position.set(x,1.8*k,z);dummy.scale.set(k,k,k);dummy.rotation.set(0,0,0);dummy.updateMatrix();trunks.setMatrixAt(i,dummy.matrix);for(let j=0;j<4;j++){dummy.position.set(x+Math.sin(j*2.1)*k,3.7*k+(j%2)*.6,z+Math.cos(j*2.1)*k);dummy.scale.set(1.7*k,1.4*k,1.8*k);dummy.updateMatrix();leaves.setMatrixAt(i*4+j,dummy.matrix);leaves.setColorAt(i*4+j,new T.Color(['#69894f','#8aa267','#759658'][i%3]));}}trunks.computeBoundingSphere();leaves.computeBoundingSphere();parent.add(trunks,leaves);return {trunks,leaves};}
+export function detailHouse({parent,x,z,w,d,h,cube,roof='#8f614b'}){
+ // Deep frames, corner boards, plinth, chimney and porch give the silhouettes depth.
+ cube(parent,w+.25,.35,d+.25,'#8e9683',x,.35,z);for(const side of [-1,1]){cube(parent,.18,h,.18,'#eee5cc',x+side*(w/2-.1),h/2+.25,z+d/2+.08);cube(parent,w+.8,.18,.24,'#e1d5bb',x,h+.1,z+side*(d/2+.15));}
+ for(const xx of [-w*.28,w*.28]){for(const side of [-1,1])cube(parent,.12,1.95,.25,'#ece4d0',x+xx+side*1.12,3.2,z+d/2+.2);cube(parent,2.4,.13,.25,'#ece4d0',x+xx,4.1,z+d/2+.2);cube(parent,.08,1.7,.2,'#dedeca',x+xx,3.2,z+d/2+.22);cube(parent,2.1,.08,.2,'#dedeca',x+xx,3.2,z+d/2+.22);}
+ cube(parent,.13,2.9,.2,'#d9cfb9',x-1.2,1.7,z+d/2+.2);cube(parent,.13,2.9,.2,'#d9cfb9',x+1.2,1.7,z+d/2+.2);cube(parent,2.6,.15,.22,'#e4d6b7',x,3.2,z+d/2+.2);cube(parent,.16,.16,.12,'#bdad7e',x+.65,1.6,z+d/2+.3);cube(parent,3,.18,1.3,'#a8a38e',x,.38,z+d/2+1.8);
+ cube(parent,1.2,2.1,1.1,'#9c8b74',x-w*.3,h+1.4,z-d*.2);cube(parent,1.4,.18,1.3,'#655d50',x-w*.3,h+2.5,z-d*.2);
+ for(const xx of [-w*.4,w*.4]){cube(parent,.14,2.8,.14,'#8c8067',x+xx,1.8,z+d/2+2.1);}cube(parent,w*.85,.18,2.8,roof,x,3.3,z+d/2+1.1);
+ for(let row=0;row<5;row++)cube(parent,w,.025,.04,'#b4aa90',x,.9+row*.65,z+d/2+.08);
+}
+
+const shadowPixels=new Uint8Array(48*48*4);for(let y=0;y<48;y++)for(let x=0;x<48;x++){const edge=Math.max(Math.abs(x-23.5),Math.abs(y-23.5))/24;shadowPixels.set([35,53,37,Math.round(Math.max(0,1-edge*edge)*46)],(y*48+x)*4);}const shadowMap=new T.DataTexture(shadowPixels,48,48);shadowMap.needsUpdate=true;const shadowMaterial=new T.MeshBasicMaterial({map:shadowMap,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
+export function contactShadow(parent,x,z,w,d){const shadow=new T.Mesh(new T.PlaneGeometry(w+3,d+3),shadowMaterial);shadow.name='Soft ground contact';shadow.rotation.x=-Math.PI/2;shadow.position.set(x,.28,z);parent.add(shadow);return shadow;}
