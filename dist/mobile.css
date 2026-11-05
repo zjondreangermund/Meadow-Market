@@ -27,3 +27,7 @@ html,body{overscroll-behavior:none}button,a,input,select{touch-action:manipulati
 @media(max-height:500px) and (orientation:landscape){.weather-status{top:8px;right:8px}.regional-atlas{min-height:300px}}
 @media(max-width:380px){.weather-status{top:calc(123px + env(safe-area-inset-top,0px));max-width:135px}.queue-strip{top:calc(170px + env(safe-area-inset-top,0px))}}
 @media(max-height:500px) and (orientation:landscape){.weather-status{display:none}}
+
+#vehicle-interact{position:fixed;z-index:8;left:50%;transform:translateX(-50%);bottom:180px;min-height:48px;max-width:calc(100vw - 32px);padding:12px 24px;background:#315b46;color:#fffdf0;border:1px solid #a9c6ac;border-radius:14px;box-shadow:0 5px 18px #1a332c44;font-weight:700}#vehicle-interact[hidden]{display:none}#vehicle-interact:disabled{opacity:.8}
+@media(max-width:750px),(pointer:coarse){#vehicle-interact{bottom:calc(350px + env(safe-area-inset-bottom,0px));font-size:13px;min-width:195px}}
+@media(max-height:500px) and (orientation:landscape){#vehicle-interact{left:12px;bottom:155px;max-width:220px;transform:none;font-size:12px;padding:8px 12px}}

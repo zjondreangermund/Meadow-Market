@@ -16,7 +16,7 @@ export function vehicleStep(v,id,input,dt,blocked,motion={speed:0}){
  const spec=VEHICLES[id],step=Math.max(0,Math.min(.05,dt));if(!spec||!step)return {moved:0,blocked:false};
  const target=input.brake||v.energy<=0?0:input.throttle>0?spec.speed:input.throttle<0?-spec.reverse:0,rate=input.brake?20:target===0?7:5;
  motion.speed+=Math.max(-rate*step,Math.min(rate*step,target-motion.speed));
- const heading=v.heading+input.steer*motion.speed/spec.speed*1.8*step,distance=motion.speed*step;
+ const heading=v.heading-input.steer*motion.speed/spec.speed*1.8*step,distance=motion.speed*step;
  const nx=v.x+Math.sin(heading)*distance,nz=v.z+Math.cos(heading)*distance;
  let collision=false;for(let i=0;i<8;i++){const a=i*Math.PI/4;if(blocked(nx+Math.sin(a)*spec.radius,nz+Math.cos(a)*spec.radius)){collision=true;break;}}
  for(const side of [-1,1]){const half=id==='tractor'?3.6:3.2;for(const lateral of [-spec.radius,spec.radius])if(blocked(nx+Math.sin(heading)*half*side+Math.cos(heading)*lateral,nz+Math.cos(heading)*half*side-Math.sin(heading)*lateral))collision=true;}
