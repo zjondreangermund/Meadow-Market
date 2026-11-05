@@ -66,8 +66,8 @@ export function setAnimalMotion(a,kind,speed=0){
  a.motionKind=kind;
  const key=kind==='eat'?'eating':kind==='walk'?'walk':kind==='gallop'?'gallop':'idle';
  let action=a.actions.get(key)||a.actions.get('idle');if(!action)return;
- if(a.currentAction!==action){if(a.currentAction)a.currentAction.fadeOut(.25);action.reset().fadeIn(.25).play();a.currentAction=action;}
- action.timeScale=kind==='walk'?Math.max(.3,Math.min(1.4,speed/1.1)):1;
+ if(a.currentAction!==action){if(a.currentAction)a.currentAction.fadeOut(.25);action.reset().fadeIn(.25).play();action.time=(a.animationOffset||0)%Math.max(.1,action.getClip().duration);a.currentAction=action;}
+ action.timeScale=kind==='walk'?Math.max(.3,Math.min(1.4,speed/1.1)):1;action.timeScale*=a.animationRate||1;
 }
 export function animateRigDetails(a,dt){
  if(!a.rigLegs?.length)return;

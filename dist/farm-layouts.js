@@ -1,0 +1,11 @@
+export function farmLayout(p){const premium=!!p.premium,home={id:'house',kind:premium?'villa':'house',x:p.x+15,z:p.z-13,w:premium?14:12,d:premium?11:9,h:premium?6.4:4.2},buildings=[home],pasture=['dairy','boarding','mixed'].includes(p.kind),fields=p.kind==='crop'?{x:p.x-17,z:p.z+1,w:premium?24:21,d:34}:null;
+ if(pasture)buildings.push({id:'working-barn',kind:p.kind==='boarding'?'stable':'barn',x:p.x-16,z:p.z-15,w:22,d:10,h:5.2});
+ buildings.push({id:'shed',kind:p.kind==='orchard'?'packing':p.kind==='dairy'?'dairy':premium?'workshop':'shed',x:p.x+17,z:p.z+7,w:10,d:9,h:3.6});
+ const pen=pasture?{minX:p.x-28,maxX:p.x-5,minZ:p.z-7,maxZ:p.z+20}:null,troughs=pen?[{x:p.x-8,z:p.z+2,w:2,d:.9},{x:p.x-8,z:p.z+14,w:2,d:.9}]:[];
+ const fences=[];if(pen){fences.push({x:pen.minX,z:(pen.minZ+pen.maxZ)/2,w:.16,d:pen.maxZ-pen.minZ},{x:(pen.minX+pen.maxX)/2,z:pen.minZ,w:pen.maxX-pen.minX,d:.16},{x:(pen.minX+pen.maxX)/2,z:pen.maxZ,w:pen.maxX-pen.minX,d:.16});for(const [a,b]of [[pen.minZ,p.z+6],[p.z+10,pen.maxZ]])fences.push({x:pen.maxX,z:(a+b)/2,w:.16,d:b-a});}
+ const petBowls=[{x:p.x+9,z:p.z-4.6,w:.65,d:.65},{x:p.x+11,z:p.z-4.6,w:.65,d:.65}];
+ const blocks=[...petBowls,...buildings.map(b=>({...b,w:b.w+1,d:b.d+4})),...fences,...troughs.map(t=>({...t,w:t.w+.25,d:t.d+.25}))];
+ const zones={yard:{minX:p.x-29,maxX:p.x+29,minZ:p.z-22,maxZ:p.z+26},pasture:pen?{minX:pen.minX+1.7,maxX:pen.maxX-1.7,minZ:pen.minZ+1.7,maxZ:pen.maxZ-1.7}:null};
+ const animals=p.kind==='dairy'?['cow','cow','cow']:p.kind==='boarding'?['horse','horse']:p.kind==='mixed'?['cow','pig','horse']:[];
+ return {buildings,fields,pen,troughs,petBowls,fences,blocks,zones,animals,people:[{name:p.family[0],variant:'man',height:.92,width:1.05,role:'caretaker'},{name:p.family[1],variant:'lady',height:.86,width:.94,role:p.kind==='orchard'?'orchard keeper':'farmer'},{name:p.family[2],variant:['Lina','Zoe'].includes(p.family[2])?'lady':'man',height:.59,width:.88,role:'child'}]};}
+export const rectBlocked=(blocks,x,z,pad=0)=>blocks.some(b=>Math.abs(x-b.x)<b.w/2+pad&&Math.abs(z-b.z)<b.d/2+pad);

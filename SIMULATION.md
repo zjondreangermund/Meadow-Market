@@ -29,3 +29,15 @@ Use Show this loading bay / trailer for a close camera view. Vehicle entry/exit 
 Vehicles retain the bundled metre-scale GLB meshes and native wheel pivots, with paint/glass tuning, contact shadows and a baked sky reflection texture for PBR surfaces. Fixed industrial detail is batched by material; growing fields use instanced meshes. The grain trailer and industrial loading structures are local geometry without third-party network requests.
 
 Automated scene and rule checks cover growth, save migration, exchange preservation, physical loading, processing, cargo conservation, real controller towing and loading clearance. The available cloud browser lacks WebGL, so rendered pixels, touch driving and actual GPU performance remain unverified. This is a local solo simulation; it does not add a multiplayer server.
+
+## Neighbours and estates — Visual v16
+
+The four original estate IDs and prices are retained. Six distinct farms now have complete pre-sale houses, working buildings and planting/turnout layouts. Crop estates have arable rows and grain storage; the orchard has mixed fruit rows and a packing shed; the dairy has open grazing, milking buildings and milk storage; the boarding farm has stables and a sand turnout/lunging ring.
+
+Two additional premium properties have real recipe differences: Highplain costs 4,600 coins, consumes 12 seeds and 12 water, and yields 132 maize in 36 real hours (or two manual farm days). Greenhaven costs 6,200 coins and produces 34 milk, 8 eggs and 14 fertiliser using 14 feed, 18 water and 2 fruit per day. Purchasing never changes an existing horse, coat, trailer load or farm record.
+
+Each estate has two adult residents and a child, using independent clones of the existing animated male/female farmer rigs with different proportions. A dog and cat have articulated legs, heads and tails. Residents have separate random seeds, walking/resting/looking/working routines and contextual local dialogue. Children do not perform work animations. These are local NPC routines and scripted contextual replies, not an external language-model service.
+
+Home animals and estate livestock now use independent weighted behaviour schedules and animation offsets. Movement turns toward a path before advancing, checks swept clearance around food bowls and obstacles, avoids nearby agents and stays inside the appropriate garden or pasture. Food and water troughs and pet bowls also block the player's routes. Static farm buildings are batched by material; resident/animal detail is distance-culled, with fewer active farms on mobile.
+
+Browser WebGL remains unavailable in the testing environment, so no new rendered screenshots or real-device performance claims are made.
