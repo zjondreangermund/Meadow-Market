@@ -2,7 +2,7 @@ import {createOrchard,createFieldCrop} from './orchard-models.js?v=simulation15'
 import {growthProgress,growthReady} from './growth.js?v=simulation15';
 import {buildRoads} from './road-world.js?v=neighbours16';
 import {createBusiness} from './business-models.js?v=simulation15';
-import {createFarmVehicle} from './vehicle-models.js?v=simulation15';
+import {createFarmVehicle} from './vehicle-models.js?v=life17';
 import {treeGrove,detailHouse,contactShadow} from './landscape-assets.js?v=landscape13';
 import * as T from './three.module.js';
 import {PLOTS,DESTINATIONS,ensureCounty} from './county-sim.js?v=simulation15';
@@ -41,7 +41,8 @@ export function buildCounty({scene,register,block,mats,mobile=false}){
  });}
  // Procedural border groves share geometry/materials; one instanced draw per grove.
  for(const [cx,cz]of [[-84,58],[42,-70],[88,-62],[16,69]])chunk('County grove',cx,cz,g=>treeGrove(g,cx,cz,18,11));
- const vans=[];for(let i=0;i<2;i++){const actor=createFarmVehicle('pickup');actor.root.name='County delivery traffic';scene.add(actor.root);actor.ready.then(()=>actor.root.traverse(o=>{if(o.isMesh)o.castShadow=false;}));vans.push({root:actor.root,actor,t:i*150});}
+ const vans=[]; // Named residents now drive real errands instead of looping ambient vans.
+
  const loop=[[-46,-34],[62,-34],[62,42],[-46,42]],lengths=loop.map((p,i)=>Math.hypot(p[0]-loop[(i+1)%4][0],p[1]-loop[(i+1)%4][1])),total=lengths.reduce((a,b)=>a+b,0);
  function update(dt,player,state,focus=player){const c=ensureCounty(state);for(const b of businesses)b.update(dt);for(const ch of chunks){const near=Math.min(Math.hypot(player.x-ch.x,player.z-ch.z),Math.hypot(focus.x-ch.x,focus.z-ch.z))<(mobile?66:90);if(near&&!ch.loaded){ch.build(ch.group);ch.loaded=true;}ch.group.visible=near;}
   for(const [id,v]of plots){const r=c.plots[id];v.ground.visible=!!r;for(const f of v.furrows)f.visible=!!r;v.growth.visible=!!r&&!!r.job;v.orchard?.update(r,state.day);v.ready.visible=growthReady(r?.job,state.day);if(PLOTS.find(p=>p.id===id).kind==='field')v.growth.scale.y=r?.job ? .04+.96*growthProgress(r.job,state.day):.2;if(PLOTS.find(p=>p.id===id).kind==='field')v.growth.position.y=.3*(1-v.growth.scale.y);}

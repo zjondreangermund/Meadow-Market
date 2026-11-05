@@ -4,7 +4,7 @@ import {runout,paradePosition,detailTexture,addRaceDayVenue} from './race-day.js
 import {fitRig,skinBounds} from './model-rig.js';
 import {smoothRig} from './smooth-rig.js';
 import {createJockey} from './jockey.js?v=track8';
-import {mobileDevice,graphicsProfile} from './graphics-profile.js?v=track8';
+import {mobileDevice,graphicsProfile} from './graphics-profile.js?v=life17';
 import {racingPose} from './race-motion.js';
 import {safeRaceCamera,cameraClear} from './race-camera.js?v=track8';
 import {GLTFLoader} from './vendor/GLTFLoader.js';

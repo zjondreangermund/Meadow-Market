@@ -1,11 +1,11 @@
-import {mobileDevice} from './graphics-profile.js?v=track8';
+import {mobileDevice} from './graphics-profile.js?v=life17';
 const phoneGraphics=mobileDevice();
 import {horsesFor,racingHorses} from './horses.js?v=breeding9';
 import {horseCoatId} from './coat-variants.js?v=visual4';
-import {fresh} from './economy.js?v=simulation15';
+import {fresh} from './economy.js?v=life17';
 import {JOCKEYS,jockeyById,rosterFor,availableJockey,hireJockey,bookJockey} from './jockeys.js?v=track8';
 import {createRace,stepRace,raceOrder,STEP,RULES_VERSION} from './race-engine.js?v=breeding9';
-import {createRaceScene,SILKS} from './race-scene.js?v=track8';
+import {createRaceScene,SILKS} from './race-scene.js?v=life17';
 const $=s=>document.querySelector(s),show=(id,yes)=>$(id).hidden=!yes;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let save;try{save=JSON.parse(localStorage.getItem('meadow-cycle-v2'));}catch{}if(!save||save.version!==2)save=fresh();

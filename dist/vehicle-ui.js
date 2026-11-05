@@ -2,7 +2,7 @@ import {ensureLogistics,trailerCandidate,trailerBlocked} from './production-logi
 import * as T from './three.module.js';
 import {GARAGE,VEHICLES,ensureVehicles,buyVehicle,rechargeVehicle,loadVehicleContract,unloadVehicle,deliverVehicle,tractorWork,recoverVehicle,vehicleStep,exitPosition} from './vehicles.js?v=simulation15';
 import {ensureCounty,contractStatus} from './county-sim.js?v=simulation15';
-import {createFarmVehicle} from './vehicle-models.js?v=simulation15';
+import {createFarmVehicle} from './vehicle-models.js?v=life17';
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function installFarmVehicles({scene,state,save,modal,toast,player,keys,blocked,register,walk,isBusy,clearRoute,shadow,block,sign}){
  const actors=new Map();let active=null,motion={speed:0},saveClock=0,hudClock=0,working=0,exitRequested=false;
@@ -16,7 +16,7 @@ export function installFarmVehicles({scene,state,save,modal,toast,player,keys,bl
  const near=v=>Math.hypot(v.x-player.position.x,v.z-player.position.z)<5;
  const context=document.querySelector('#vehicle-interact');
  function closest(){return Object.entries(ensureVehicles(state).owned).filter(([,v])=>near(v)).sort((a,b)=>Math.hypot(a[1].x-player.position.x,a[1].z-player.position.z)-Math.hypot(b[1].x-player.position.x,b[1].z-player.position.z))[0]?.[0];}
- function contextHud(){if(!context)return;const id=active||closest();context.hidden=!id||document.querySelector('dialog').open;if(id){context.textContent=active?(exitRequested?'Stopping to exit…':'Park & exit · E'):'Enter '+VEHICLES[id].name+' · E';context.disabled=exitRequested;}}
+ function contextHud(){if(!context)return;const id=active||closest();context.hidden=!id||document.querySelector('dialog').open;if(id){const text=active?(exitRequested?'Stopping to exit…':'Park & exit · E'):'Enter '+VEHICLES[id].name+' · E';if(context.textContent!==text)context.textContent=text;context.disabled=exitRequested;}}
  window.toggleFarmVehicle=()=>{if(active)return window.exitFarmVehicle();const id=closest();if(id)window.enterFarmVehicle(id);};
  window.addEventListener('keydown',e=>{if(e.key?.toLowerCase()!=='e'||e.repeat||document.querySelector('dialog').open||/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName))return;if(active||closest()){e.preventDefault();window.toggleFarmVehicle();}});
  function hud(){contextHud();const e=document.querySelector('#vehicle-hud');if(!e)return;e.hidden=!active;if(!active)return;const v=ensureVehicles(state).owned[active];document.querySelector('#vehicle-readout').textContent=VEHICLES[active].name+' · '+Math.round(v.energy)+'% · '+Math.round(Math.abs(motion.speed)*3.6)+' km/h';const work=document.querySelector('#tractor-work');if(work)work.hidden=active!=='tractor';}

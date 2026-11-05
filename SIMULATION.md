@@ -41,3 +41,16 @@ Each estate has two adult residents and a child, using independent clones of the
 Home animals and estate livestock now use independent weighted behaviour schedules and animation offsets. Movement turns toward a path before advancing, checks swept clearance around food bowls and obstacles, avoids nearby agents and stays inside the appropriate garden or pasture. Food and water troughs and pet bowls also block the player's routes. Static farm buildings are batched by material; resident/animal detail is distance-culled, with fewer active farms on mobile.
 
 Browser WebGL remains unavailable in the testing environment, so no new rendered screenshots or real-device performance claims are made.
+
+
+## Visual v17: local time, neighbours and fishing
+
+The sky and automatic building/street lights follow Africa/Windhoek real-world time (CAT). Next day advances production, not the real clock. Seasonal daylight is approximated for Windhoek.
+
+Adults make scheduled daytime trips to the co-op or mill, park, walk inside and return. These ambient errands never consume the player's stock or money. Children attend school on weekday mornings, sleep overnight and alternate outdoor play with time at home.
+
+Use Lake to walk to the fishing pier. Casting costs one maize. Wait for the bite alert, then press Reel in within ten seconds. Catches enter inventory and can be sold through the market. Leaving the pier cancels the cast without refunding bait.
+
+Smooth graphics is now the default on desktop and mobile: pixel ratio 1, no shadow maps. High remains optional with reduced pixel/shadow budgets. Static scenery is batched (481 submissions removed in the full-scene construction check), distant agents update less often, and ambient cars use a one/two vehicle pool on mobile/desktop. This is a CPU/construction measurement, not measured GPU FPS.
+
+Automated tests exercise scene construction, routes, clock/light state, fishing, migrations and existing gameplay. The available browser does not support WebGL, so rendered appearance and physical-device performance remain unverified.

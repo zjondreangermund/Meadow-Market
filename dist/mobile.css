@@ -37,3 +37,6 @@ html,body{overscroll-behavior:none}button,a,input,select{touch-action:manipulati
 
 .regional-atlas{grid-template-rows:none;grid-auto-rows:minmax(100px,auto);gap:14px}.regional-home{position:static;transform:none;grid-column:1/-1;grid-row:1;justify-self:center;min-width:190px}.regional-estate{min-height:115px}
 @media(max-width:750px),(pointer:coarse){.regional-atlas{gap:10px;padding:12px}.regional-estate b{font-size:15px}.regional-estate{min-height:125px}.regional-home{max-width:100%;font-size:12px}}
+
+.clock-status{position:fixed;right:22px;top:145px;z-index:4;padding:7px 12px;background:#f4f1d9e8;color:#355040;border-radius:10px;font:600 12px system-ui}#fishing-hud{position:fixed;bottom:190px;left:50%;transform:translateX(-50%);z-index:8;max-width:calc(100vw - 20px);background:#e8edddf0;color:#304d40;padding:12px;border-radius:12px}#fishing-hud b{display:block;margin-bottom:8px}#fishing-hud button{min-height:44px;margin-right:5px}
+@media(max-width:750px),(pointer:coarse){.clock-status{right:8px;top:118px;font-size:10px;padding:5px 8px}#fishing-hud{bottom:280px;font-size:12px;width:240px}}
