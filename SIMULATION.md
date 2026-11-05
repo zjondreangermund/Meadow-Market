@@ -54,3 +54,18 @@ Use Lake to walk to the fishing pier. Casting costs one maize. Wait for the bite
 Smooth graphics is now the default on desktop and mobile: pixel ratio 1, no shadow maps. High remains optional with reduced pixel/shadow budgets. Static scenery is batched (481 submissions removed in the full-scene construction check), distant agents update less often, and ambient cars use a one/two vehicle pool on mobile/desktop. This is a CPU/construction measurement, not measured GPU FPS.
 
 Automated tests exercise scene construction, routes, clock/light state, fishing, migrations and existing gameplay. The available browser does not support WebGL, so rendered appearance and physical-device performance remain unverified.
+
+
+## Visual v18: detailed neighbours, roads and riding
+
+Children and elders now have separate articulated geometry, age-specific proportions, faces, clothing and gait; children are no longer scaled adult farmers. Adults retain their native rigs with seeded facial proportions, build, skin/hair and outfit variations. Every estate adds an elder. Dogs and cats have different anatomy, detailed faces, paws and ears; cats have six permanent identity-based coat patterns. Rigid details are batched within moving parts. These are code-authored models, not scanned human/pet assets.
+
+All regional farms show kitchen gardens with visibly different maize, vegetables and sunflowers, plus fruit trees. Unpurchased crop farms show maintained fields. Dairy/boarding/mixed estates have larger, different herds; hens have separate moving heads, wings and legs. Adult chores require arrival at a real bed or trough; idle random work no longer displays tools. Neighbour activity is ambient and does not spend player inventory.
+
+New collector loops join all farm approaches, with village/mill/exchange and estate parking areas. Tests verify regional routes and road/building separation.
+
+The garage offers three original pickup designs inspired by Amarok, Hilux and Ranger double cabs. They have different dimensions/front treatments, slanted windows, doors, seams, mirrors, grille, lights, open cargo beds and articulated alloy wheels. These are original inspired designs, not manufacturer replicas or licensed assets. Change body style while parked through Vehicles; ownership, cargo and charge are retained.
+
+Open an adult owned horse profile and select Ride on the farm, or press R / Ride nearby. Finish the task queue and leave any vehicle first. Use W/S or touch arrows to move forward/back and A/D to steer. The mounted HUD switches walk, trot and canter. R / Dismount finds clear ground; the horse stays nearby for the current session. Foals, resting pregnant mares and exhausted horses cannot be ridden. Riding preserves stats, energy, coats and breeding records. Parked horse positions are session-local; reload returns the horses to their normal home placements.
+
+35 automated checks pass, including full scene construction and actual rig/asset parsing. Rendered quality and device frame rates remain unverified because the available browser lacks WebGL.

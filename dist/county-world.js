@@ -1,8 +1,8 @@
 import {createOrchard,createFieldCrop} from './orchard-models.js?v=simulation15';
 import {growthProgress,growthReady} from './growth.js?v=simulation15';
-import {buildRoads} from './road-world.js?v=neighbours16';
+import {buildRoads} from './road-world.js?v=detail18';
 import {createBusiness} from './business-models.js?v=simulation15';
-import {createFarmVehicle} from './vehicle-models.js?v=life17';
+import {createFarmVehicle} from './vehicle-models.js?v=detail18';
 import {treeGrove,detailHouse,contactShadow} from './landscape-assets.js?v=landscape13';
 import * as T from './three.module.js';
 import {PLOTS,DESTINATIONS,ensureCounty} from './county-sim.js?v=simulation15';
