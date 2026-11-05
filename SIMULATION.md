@@ -69,3 +69,14 @@ The garage offers three original pickup designs inspired by Amarok, Hilux and Ra
 Open an adult owned horse profile and select Ride on the farm, or press R / Ride nearby. Finish the task queue and leave any vehicle first. Use W/S or touch arrows to move forward/back and A/D to steer. The mounted HUD switches walk, trot and canter. R / Dismount finds clear ground; the horse stays nearby for the current session. Foals, resting pregnant mares and exhausted horses cannot be ridden. Riding preserves stats, energy, coats and breeding records. Parked horse positions are session-local; reload returns the horses to their normal home placements.
 
 35 automated checks pass, including full scene construction and actual rig/asset parsing. Rendered quality and device frame rates remain unverified because the available browser lacks WebGL.
+
+
+## Visual v19: portrait garden graphics trial
+
+Open an adult horse profile and select Portrait garden. The separate showcase.html scene reads saved adult horses and their existing coats/avatar without writing localStorage. With no saved adult horse it displays a clearly named Portrait Bay study horse. No coins, production or race results are awarded.
+
+The original authored animated skeleton is retained. The horse receives bounded shoulder/haunch/chest sculpting, a desktop-only extra subdivision pass, generated coat bump detail, bone-attached mane/tail clumps, muzzle details and leather/metal bridle. The rider retains the existing native humanoid rig and racing seat. This is an incremental art trial, not a new production horse asset or a claim of matching the supplied commercial game's quality.
+
+A pavilion, railings, terrace, instanced hedges/flowers/grass, sky gradient, warm sun, fill/rim light, reflections, ACES tone mapping and contact shadows provide close-up framing. Drag/orbit, pinch/wheel zoom, reset view and idle/walking/canter circuits are available. Smooth defaults to pixel ratio 1 without shadow maps; High enables capped pixel ratios and 512/1024 shadow maps. A live FPS/draw-call/triangle counter measures real elapsed frame time. High automatically returns to Smooth after sustained low frame rates. The phone path uses fewer geometry subdivisions and hair clumps, and targets 30 FPS. These are budgets/targets, not measured performance claims.
+
+36 automated checks passed before final cache packaging. The available browser explicitly reports no WebGL; scene appearance, shader rendering, GPU frame rate and physical Android touch response remain unverified.

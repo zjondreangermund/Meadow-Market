@@ -37,7 +37,7 @@ import {plantMaize,detailBuildings,softBuildingBox,orchardTree,landscapeFarm} fr
 import {horsesFor,trainHorse,restHorses,simulateRace,isAdultHorse} from './horses.js?v=breeding9';
 import {animalIdentity} from './animal-identity.js?v=breeding9';
 import {readyBirths} from './breeding.js?v=breeding9';
-import {installBreedingUI} from './breeding-ui.js?v=detail18';
+import {installBreedingUI} from './breeding-ui.js?v=portrait19';
 import {buildStable} from './stable.js';
 import {upgradeAnimals,setAnimalMotion,animateRigDetails} from './animal-assets.js?v=neighbours16';
 import {applyChickenFeathers,applyAnimalCoat,COATS,horseCoatId} from './coat-variants.js?v=visual4';
@@ -150,12 +150,12 @@ function modelReport(type,ok,report){
  const group=animals.filter(a=>a.type===type),hd=group.filter(a=>a.hd).length,native=group.filter(a=>a.nativeRig).length;
  loadReport[type]={hd,native,total:group.length,items:group.map(a=>({name:a.g.userData.name||type,hd:!!a.hd,nativeRig:!!a.nativeRig,error:a.hdError||null}))};
  const label=document.querySelector('#asset-quality');
- if(label)label.textContent='Visual v18 · '+['horse','cow','pig','chicken'].map(k=>k+': '+(loadReport[k]?(loadReport[k].native===loadReport[k].total?loadReport[k].native+'/'+loadReport[k].total+' animated':loadReport[k].hd+'/'+loadReport[k].total+' HD'):'loading')).join(' | ')+' · Details';
+ if(label)label.textContent='Visual v19 · '+['horse','cow','pig','chicken'].map(k=>k+': '+(loadReport[k]?(loadReport[k].native===loadReport[k].total?loadReport[k].native+'/'+loadReport[k].total+' animated':loadReport[k].hd+'/'+loadReport[k].total+' HD'):'loading')).join(' | ')+' · Details';
  updateHorseActors();
  if(ok)for(const a of group)a.model?.traverse(o=>{if(o.isMesh){o.userData.animal=a.g;if(!clickables.includes(o))clickables.push(o);}});
 }
 const modelText=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-window.showModelStatus=()=>modal('<h2>3D model status · Visual v18</h2>'+['horse','cow','pig','chicken'].map(type=>'<h3>'+type+'</h3>'+(loadReport[type]?.items.map(a=>'<p><b>'+modelText(a.name)+'</b>: '+(a.nativeRig?'Original animated model · compatibility workaround':a.hd?'HD loaded':'Original model · '+modelText(a.error||'Loading'))+'</p>').join('')||'<p>Loading</p>')).join('')+'<button onclick="retryHDModels()">Retry missing HD models</button><p>Retries only models. Your farm progress and horse statistics stay unchanged.</p>');
+window.showModelStatus=()=>modal('<h2>3D model status · Visual v19</h2>'+['horse','cow','pig','chicken'].map(type=>'<h3>'+type+'</h3>'+(loadReport[type]?.items.map(a=>'<p><b>'+modelText(a.name)+'</b>: '+(a.nativeRig?'Original animated model · compatibility workaround':a.hd?'HD loaded':'Original model · '+modelText(a.error||'Loading'))+'</p>').join('')||'<p>Loading</p>')).join('')+'<button onclick="retryHDModels()">Retry missing HD models</button><p>Retries only models. Your farm progress and horse statistics stay unchanged.</p>');
 let retryingHD=false;
 window.retryHDModels=async()=>{if(retryingHD)return;retryingHD=true;document.querySelector('dialog').close();toast('Retrying missing HD models…');try{await upgradeAnimals(animals.filter(a=>!a.hd&&!a.nativeRig),modelReport);}finally{retryingHD=false;window.showModelStatus();}};
 upgradeAnimals(animals,modelReport);
