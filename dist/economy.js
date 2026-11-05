@@ -1,4 +1,4 @@
-import {harvestCrop} from './crops.js';
+import {harvestCrop} from './crops.js?v=garden131';
 // Pure local-alpha rules. No real currency, shared users or payment claims.
 export const GOODS={seeds:'Maize seeds',water:'Water',maize:'Maize',feed:'Grain feed',fruit:'Fruit feed',power:'Power',eggs:'Eggs',specialEggs:'Specialty eggs',milk:'Milk',fertiliser:'Fertiliser',truffles:'Truffles',condition:'Condition points'};
 export const RATIONS={cow:{feed:4,water:6,fruit:1},pig:{feed:3,water:4,fruit:1},chicken:{feed:1,water:1,fruit:0},horse:{feed:5,water:6,fruit:2}};

@@ -1,5 +1,5 @@
 import * as T from './three.module.js';
-import {FIELD,cropStage} from './crops.js';
+import {FIELD,cropStage} from './crops.js?v=garden131';
 // Original scene detail; no external textures or per-frame allocations.
 export function plantMaize({scene,box,cyl,ball,mats}){
  const crops=[];const leafMat=new T.MeshStandardMaterial({color:'#548746',roughness:.8,side:T.DoubleSide});
