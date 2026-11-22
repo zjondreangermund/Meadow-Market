@@ -55,3 +55,11 @@ blocking the farm or race. The on-screen version label reports fallback status.
 Humans remain their original Quaternius skinned identity, with improved subdivision
 and true UV-mapped workwear/jockey fabric. They are NOT newly authored photorealistic
 human GLBs. The original farmer, jockey and race interactions remain unchanged.
+
+Frontier additional props — 22 November 2026:
+Poly Haven Wooden Crate 02, James Ray Cock (modelling), Jurita Burger (graphic design).
+Source: https://polyhaven.com/a/wooden_crate_02
+Licence: CC0 1.0, https://polyhaven.com/license
+Bundled as props/frontier-crate.glb with original geometry; diffuse, ARM and normal maps
+resized to 512px JPEG and embedded for mobile. No external texture requests.
+Frontier pickup licence/source: models/vehicles/ASSETS.md.

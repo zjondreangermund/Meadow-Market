@@ -33,3 +33,7 @@
 - [x] Textured terrain, distant hills, batched scenery, animated scouts and camera pitch/obstruction handling.
 - [ ] Physical Android Chrome and iPhone Safari QA: loading, touch controls, complete extraction, reload, background resume, FPS and thermal measurements.
 - [ ] Authenticated authoritative session server, durable player/farm/inventory records, two-client synchronization and atomic secure game-currency trading.
+- [x] Reuse the existing home-farm scene, stable, livestock rigs and saved appearance in Frontier; keep original farm management accessible.
+- [x] Imported CC0 pickup with animated wheel assemblies, textured Poly Haven crates, original tractor/farm props, source licence records.
+- [x] Game-surface text-selection/context-menu prevention for Android/iPhone controls.
+- [ ] Phone visual and long-press playtest; further mobile-ready imported vegetation/buildings and vehicle interior assets.

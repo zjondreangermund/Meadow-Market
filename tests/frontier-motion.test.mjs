@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import {blocked,moveBody,stepVehicle,exitPoint} from '../dist/frontier-motion.js';
+import {blocked,setHomeObstacles,moveBody,stepVehicle,exitPoint} from '../dist/frontier-motion.js';
 import {newFrontierState,normaliseState,packSupplies,consume,collectAt,depositAtHome,knockout} from '../dist/frontier-rules.js';
 let p={x:32,z:12};moveBody(p,20,0);assert(p.x<34,'cannot tunnel through safe boundary');
 p={x:32,z:0};moveBody(p,20,0);assert(p.x>34,'road gate remains open');
-p={x:-24,z:-12};moveBody(p,0,-20);assert(p.z> -14,'barn prevents tunnelling');
-assert(blocked(-24,-20));
+setHomeObstacles([{x:-24,z:-10,w:5,d:3.5}]);
+p={x:-24,z:-4};moveBody(p,0,-20);assert(p.z> -6.5,'barn prevents tunnelling');
+assert(blocked(-24,-10));
 const s=newFrontierState();assert(packSupplies(s,'water',2).ok);assert.equal(s.storage.water,3);s.x=55;assert(consume(s,'water').ok);assert(!packSupplies(s,'rations').ok);
 assert(collectAt(s,'scrap',100).ok);s.x=0;assert(depositAtHome(s).ok);assert.equal(s.storage.scrap,2);assert.equal(s.pack.scrap,0);depositAtHome(s);assert.equal(s.storage.scrap,2);
 const vehicle=s.vehicle;vehicle.x=120;vehicle.z=2;vehicle.heading=.8;const restored=normaliseState(JSON.parse(JSON.stringify(s)));assert.equal(restored.vehicle.x,120);assert.equal(restored.vehicle.z,2);assert.equal(restored.vehicle.heading,.8);assert.equal(restored.vehicle.speed,0);assert.equal(restored.x,0);

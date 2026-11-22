@@ -107,3 +107,6 @@ Browser QA exercised limit order entry and confirmed available/reserved balances
 
 ## Frontier continuation — 22 November 2026
 See FRONTIER.md Phase 1 browser candidate for changes, automated coverage and outstanding GPU/device QA. Original farm/race files and meadow-cycle-v2 remain untouched. Frontier uses meadow-frontier-prototype-v1. New modules frontier-motion.js and frontier-art.js isolate collision/vehicle movement and deterministic batched scenery. Server accounts, persistent online inventories and real multiplayer are not implemented. Test currency only.
+
+## Shared home farm / touch / model update — 22 November 2026
+Both modes use home-farm.js; the original farm scene construction was extracted without changing its layout/economy. Frontier adds original stable, livestock, saved crop/horse appearance (read only), farm props and a return link to full farm management. Game surface long presses no longer select text/open Copy, while text inputs remain editable. Frontier imports an Innerscene CC0 pickup and Poly Haven textured supply crates; bundled assets and source licences are documented. Inventory/currency remain isolated between modes. GPU/device QA remains unverified.
