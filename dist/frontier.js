@@ -304,7 +304,6 @@ function tick(t){
  requestAnimationFrame(tick);
  if(!tick.last)tick.last=t;
  const dt=Math.min(.05,(t-tick.last)/1000);tick.last=t;
- if(dt<1/46&&mobile)return;
  if(!$('market').open){
    updatePlayer(dt);
    simulateNeeds(state,dt);
