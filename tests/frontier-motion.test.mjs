@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {blocked,moveBody,stepVehicle,exitPoint} from '../dist/frontier-motion.js';
+import {newFrontierState,normaliseState,packSupplies,consume,collectAt,depositAtHome,knockout} from '../dist/frontier-rules.js';
+let p={x:32,z:12};moveBody(p,20,0);assert(p.x<34,'cannot tunnel through safe boundary');
+p={x:32,z:0};moveBody(p,20,0);assert(p.x>34,'road gate remains open');
+p={x:-24,z:-12};moveBody(p,0,-20);assert(p.z> -14,'barn prevents tunnelling');
+assert(blocked(-24,-20));
+const s=newFrontierState();assert(packSupplies(s,'water',2).ok);assert.equal(s.storage.water,3);s.x=55;assert(consume(s,'water').ok);assert(!packSupplies(s,'rations').ok);
+assert(collectAt(s,'scrap',100).ok);s.x=0;assert(depositAtHome(s).ok);assert.equal(s.storage.scrap,2);assert.equal(s.pack.scrap,0);depositAtHome(s);assert.equal(s.storage.scrap,2);
+const vehicle=s.vehicle;vehicle.x=120;vehicle.z=2;vehicle.heading=.8;const restored=normaliseState(JSON.parse(JSON.stringify(s)));assert.equal(restored.vehicle.x,120);assert.equal(restored.vehicle.z,2);assert.equal(restored.vehicle.heading,.8);assert.equal(restored.vehicle.speed,0);assert.equal(restored.x,0);
+assert.equal(normaliseState({version:1,x:150}).x,150,'east depot coordinates survive reload');
+const v={x:16,z:0,heading:Math.PI/2,speed:0};for(let i=0;i<60;i++)stepVehicle(v,1,0,1/60,80);assert(v.x>20);assert(v.speed<15&&v.speed>8);
+const speed=v.speed;stepVehicle(v,0,0,1/60,0);assert(v.speed<speed);assert(exitPoint(v));assert(!blocked(exitPoint(v).x,exitPoint(v).z));
+const warehouse=JSON.stringify(s.storage);s.pack.parts=4;knockout(s);assert.equal(JSON.stringify(s.storage),warehouse);assert.equal(s.pack.parts,0);assert.equal(s.vehicle.x,120,'knockout does not teleport pickup');
+console.log('PASS: solid collisions, safe gate, vehicle acceleration/braking, safe exit, parked vehicle reload, expedition packing and idempotent extraction.');

@@ -1,0 +1,22 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+import {GLTFLoader} from '../dist/vendor/GLTFLoader.js';
+globalThis.self=globalThis;globalThis.createImageBitmap=async()=>({width:512,height:512,close(){}});globalThis.ProgressEvent=class{};
+GLTFLoader.prototype.loadAsync=async function(url){const b=fs.readFileSync(new URL('../dist/'+url.replace('./',''),import.meta.url));return this.parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');};
+const elements=new Map();const ctx=new Proxy({},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>(o[k]=v,true)});
+function element(){return {hidden:true,textContent:'',open:false,children:[],style:{},classList:{add(){},remove(){}},append(x){this.children.push(x)},appendChild(x){this.children.push(x)},addEventListener(){},setPointerCapture(){},getContext(){return ctx},showModal(){this.open=true},close(){this.open=false}};}
+globalThis.document={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},createElement(){return element()},addEventListener(){}};
+globalThis.window=globalThis;globalThis.addEventListener=()=>{};globalThis.innerWidth=390;globalThis.innerHeight=844;globalThis.devicePixelRatio=2;globalThis.matchMedia=()=>({matches:true});
+const saves=new Map();globalThis.localStorage={getItem:k=>saves.get(k)||null,setItem:(k,v)=>saves.set(k,v)};
+let frame;globalThis.requestAnimationFrame=f=>frame=f;
+globalThis.__frontierRenderer={shadowMap:{},domElement:element(),setSize(){},setPixelRatio(){},render(){}};
+let src=fs.readFileSync(new URL('../dist/frontier.js',import.meta.url),'utf8').replace(/new T.WebGLRenderer\([^;]+\)/,'globalThis.__frontierRenderer').replace(/from '\.\//g,"from '"+new URL('../dist/',import.meta.url).href);
+src+='\nexport {state,scene,truckAt,farmerRig,raiders,camera,input,updatePlayer,toggleVehicle,landscapeStats,act,save};';
+const g=await import('data:text/javascript;base64,'+Buffer.from(src).toString('base64'));
+await new Promise(r=>setImmediate(r));assert(g.farmerRig);assert(g.raiders.every(r=>r.rig));assert(g.landscapeStats.staticObjectsRemoved>400);
+for(let i=1;i<90;i++)frame(i*16.7);assert(Number.isFinite(g.camera.position.x));
+g.state.x=16;g.state.z=-3;g.toggleVehicle();assert(g.state.riding);g.input.forward=true;
+for(let i=0;i<120;i++)g.updatePlayer(1/60);g.input.forward=false;assert(g.state.x>25,'pickup travels through world');assert.equal(g.truckAt.x,g.state.x);
+g.state.fuel=0;for(let i=0;i<300;i++)g.updatePlayer(1/60);assert(Math.abs(g.truckAt.speed)<.01);g.toggleVehicle();assert(!g.state.riding);assert.notEqual(g.state.z,g.truckAt.z,'safe dismount beside pickup');
+g.state.x=-10;g.state.z=-10;g.act();assert(elements.get('market').open);assert.equal(elements.get('buyActions').children.length,5);const before=g.state.storage.water;elements.get('buyActions').children[4].onclick();assert.equal(g.state.pack.water,1);assert.equal(g.state.storage.water,before-1);
+g.save();assert(saves.has('meadow-frontier-prototype-v1'));assert(!saves.has('meadow-cycle-v2'));assert.equal(JSON.parse(saves.get('meadow-frontier-prototype-v1')).vehicle.x,g.truckAt.x);
+console.log('PASS: Frontier mobile scene, animated farmer/scouts, static batching, finite camera, driven pickup, zero fuel braking, dismount, exchange supply packing and isolated save. GPU pixels unverified.');
