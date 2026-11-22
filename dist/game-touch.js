@@ -1,6 +1,9 @@
 // Suppress browser text selection/callouts only on the game surface.
 export function installGameTouch(surface){
- const prevent=event=>event.preventDefault();
+ const prevent=event=>{
+  if(event.target?.closest?.('input,textarea,[contenteditable="true"]'))return;
+  event.preventDefault();
+ };
  for(const type of ['contextmenu','selectstart','dragstart'])surface.addEventListener?.(type,prevent);
 
 }
