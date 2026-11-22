@@ -1,7 +1,9 @@
+import {finishFrontierLandscape} from './frontier-art.js';
+import {blocked,moveBody,stepVehicle,exitPoint} from './frontier-motion.js';
 import * as T from './three.module.js';
 import {loadFarmer} from './farmer-rig.js';
 import {createFarmVehicle} from './vehicle-models.js';
-import {SAVE_KEY,zoneAt,newFrontierState,normaliseState,simulateNeeds,collectAt,consume,depositAtHome,sellAtMarket,buySupplies,knockout,LABELS,SELL_PRICE} from './frontier-rules.js';
+import {SAVE_KEY,zoneAt,newFrontierState,normaliseState,simulateNeeds,collectAt,consume,depositAtHome,sellAtMarket,buySupplies,knockout,packSupplies,LABELS,SELL_PRICE} from './frontier-rules.js';
 
 // LOCAL VERTICAL SLICE ONLY. No multiplayer, PvP or real player accounts are simulated.
 const $=id=>document.getElementById(id);
@@ -14,7 +16,9 @@ const scene=new T.Scene();
 scene.background=new T.Color('#aec7c7');
 scene.fog=new T.FogExp2('#abbcb7',.0055);
 const camera=new T.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
-const renderer=new T.WebGLRenderer({antialias:!mobile,alpha:false,powerPreference:mobile?'low-power':'high-performance'});
+let renderer;
+try{renderer=new T.WebGLRenderer({antialias:!mobile,alpha:false,powerPreference:mobile?'low-power':'high-performance'});}
+catch(error){$('startup').hidden=false;$('startup').textContent='3D could not start. Enable WebGL / hardware acceleration, or open this page in Chrome on Android or Safari on iPhone.';throw error;}
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.25:1.65));
 renderer.outputColorSpace=T.SRGBColorSpace;
@@ -143,6 +147,7 @@ for(const n of nodes){
  const top=mesh(new T.OctahedronGeometry(.35),n.type==='raid'?m.raider:m.beacon,0,3.5,0,group);
  n.marker=top;
 }
+const landscapeStats=finishFrontierLandscape(scene,m);
 const farmerAnchor=new T.Group();scene.add(farmerAnchor);
 const standIn=new T.Group();farmerAnchor.add(standIn);
 box(0,1.28,0,.66,1.05,.4,m.crop,standIn);
@@ -155,18 +160,22 @@ loadFarmer('man').then(rig=>{farmerRig=rig;farmerAnchor.add(rig.root);standIn.vi
 const truck=createFarmVehicle('pickup','#74886e',{style:'touring'});
 truck.root.position.set(16,.14,-3);scene.add(truck.root);
 truck.ready.catch(e=>console.warn('Pickup model fallback:',e.message));
-let truckAt={x:16,z:-3};
+const truckAt=state.vehicle;
+truck.root.position.set(truckAt.x,.15,truckAt.z);truck.root.rotation.y=truckAt.heading;
 const raiders=[];
 for(let i=0;i<3;i++){
  const root=new T.Group();scene.add(root);
  box(0,1,0,.65,1.25,.44,m.raider,root);
  ball(0,1.94,0,.32,.33,.32,m.stone,root);
  box(0,1.7,.28,.73,.20,.15,m.darkWood,root);
- raiders.push({root,x:94+i*7,z:-24+i*8,phase:i*2});
+ const agent={root,x:94+i*7,z:-24+i*8,phase:i*2,rig:null};
+ loadFarmer('man').then(rig=>{root.clear();root.add(rig.root);agent.rig=rig;}).catch(()=>{});
+ raiders.push(agent);
 }
 const input={forward:false,backward:false,left:false,right:false,sprint:false};
 const moveByKey={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',ShiftLeft:'sprint',ShiftRight:'sprint'};
-let yaw=0,camDistance=17,toastUntil=0,near=null,elapsed=0,lastSaved=0,uiElapsed=0;
+let workingUntil=0;
+let pitch=0.42,yaw=0,camDistance=13,toastUntil=0,near=null,elapsed=0,lastSaved=0,uiElapsed=0;
 function notify(message){$('toast').textContent=message;$('toast').classList.add('visible');toastUntil=performance.now()+3100;}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));}catch(e){console.warn('Frontier save unavailable:',e);}}
 function dist(x,z){return Math.hypot(state.x-x,state.z-z);}
@@ -184,17 +193,18 @@ function act(){
  if($('market').open)return;
  near=nearestNode();
  if(!near){notify('Move closer to a farm, supply or raid marker.');return;}
- if(near.type==='market'){refreshMarket();$('market').showModal();return;}
+ if(near.type==='market'){refreshMarket();for(const k of Object.keys(input))input[k]=false;$('market').showModal();return;}
  if(near.type==='vehicle'){toggleVehicle();return;}
- handleResult(collectAt(state,near.type,Date.now()));
+ const result=collectAt(state,near.type,Date.now());if(result.ok)workingUntil=performance.now()+900;handleResult(result);
 }
 function toggleVehicle(){
  if(state.riding){
-  state.riding=false;truckAt={x:state.x,z:state.z};notify('Exited the pickup');save();return;
+  const exit=exitPoint(truckAt);if(!exit){notify('No safe place to exit here. Move the pickup.');return;}
+  state.riding=false;truckAt.speed=0;Object.assign(state,exit);notify('Exited the pickup');save();return;
  }
  if(dist(truckAt.x,truckAt.z)>8){notify('Walk to your parked pickup first.');return;}
  if(state.fuel<1){notify('Out of fuel. Refill at the exchange.');return;}
- state.riding=true;state.x=truckAt.x;state.z=truckAt.z;notify('Driving pickup. Use direction controls.');save();
+ truckAt.speed=0;state.riding=true;state.x=truckAt.x;state.z=truckAt.z;notify('Driving pickup. Use direction controls.');save();
 }
 function refreshMarket(){
  $('balances').textContent='Coins: '+state.coins+' · Warehouse: '+Object.entries(state.storage).map(([k,v])=>LABELS[k]+' '+v).join(' · ')+' · Expedition backpack: '+Object.values(state.pack).reduce((a,b)=>a+b,0)+' items';
@@ -208,6 +218,7 @@ function buildMarket(){
   const b=document.createElement('button');b.textContent='Buy '+(item==='fuel'?'10 fuel':'1 '+LABELS[item])+' · '+price+' ◈';
   b.onclick=()=>handleResult(buySupplies(state,item));$('buyActions').append(b);
  }
+ for(const item of ['rations','water']){const b=document.createElement('button');b.textContent='Pack 1 '+LABELS[item];b.onclick=()=>handleResult(packSupplies(state,item));$('buyActions').append(b);}
  $('deposit').onclick=()=>handleResult(depositAtHome(state));
  $('closeMarket').onclick=()=>$('market').close();
 }
@@ -233,28 +244,31 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{if(moveByKey[e.code])input[moveByKey[e.code]]=false;});
 window.addEventListener('blur',()=>{for(const k of Object.keys(input))input[k]=false;save();});
 let pointer=null;
-renderer.domElement.addEventListener('pointerdown',e=>{pointer={id:e.pointerId,x:e.clientX};renderer.domElement.setPointerCapture(e.pointerId);});
-renderer.domElement.addEventListener('pointermove',e=>{if(pointer?.id===e.pointerId){yaw-=((e.clientX-pointer.x)*.008);pointer.x=e.clientX;}});
+renderer.domElement.addEventListener('pointerdown',e=>{pointer={id:e.pointerId,x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointermove',e=>{if(pointer?.id===e.pointerId){yaw-=((e.clientX-pointer.x)*.008);pitch=T.MathUtils.clamp(pitch+(e.clientY-pointer.y)*.004,.18,.95);pointer.x=e.clientX;pointer.y=e.clientY;}});
 for(const event of ['pointerup','pointercancel'])renderer.domElement.addEventListener(event,()=>{pointer=null;});
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();camDistance=T.MathUtils.clamp(camDistance+Math.sign(e.deltaY)*2,9,27);},{passive:false});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 function updatePlayer(dt){
  let f=Number(input.forward)-Number(input.backward),r=Number(input.right)-Number(input.left);
- const length=Math.hypot(f,r);if(length>0){f/=length;r/=length;}
- const speed=state.riding?12.2:input.sprint?7:4.4;
- const dx=(f*Math.cos(yaw)-r*Math.sin(yaw))*speed*dt;
- const dz=(f*Math.sin(yaw)+r*Math.cos(yaw))*speed*dt;
- // Homestead fence has a traversable central gate.
- const nextX=T.MathUtils.clamp(state.x+dx,-63,159),nextZ=T.MathUtils.clamp(state.z+dz,-69,69);
- if(!(state.x<34&&nextX>=34&&Math.abs(nextZ)>6 || state.x>=34&&nextX<34&&Math.abs(nextZ)>6)){
-  state.x=nextX;state.z=nextZ;
+ const length=Math.hypot(f,r);if(length>1){f/=length;r/=length;}
+ const oldX=state.x,oldZ=state.z;
+ if(state.riding){
+  const distance=stepVehicle(truckAt,f,r,dt,state.fuel);
+  state.x=truckAt.x;state.z=truckAt.z;
+  state.fuel=Math.max(0,state.fuel-dt*(distance>0?.19:.015));
+  truck.root.position.set(truckAt.x,.15,truckAt.z);truck.root.rotation.y=truckAt.heading;
+  truck.update(Math.sign(truckAt.speed)*distance,r,Object.values(state.pack).some(v=>v>0));
+ }else{
+  const speed=input.sprint?6.3:3.8;
+  moveBody(state,(f*Math.cos(yaw)-r*Math.sin(yaw))*speed*dt,(f*Math.sin(yaw)+r*Math.cos(yaw))*speed*dt);
+  farmerAnchor.position.set(state.x,.12,state.z);
+  if(length>.05){const target=Math.atan2(state.x-oldX,state.z-oldZ);farmerAnchor.rotation.y+=Math.atan2(Math.sin(target-farmerAnchor.rotation.y),Math.cos(target-farmerAnchor.rotation.y))*Math.min(1,dt*12);}
  }
- if(state.riding){state.fuel=Math.max(0,state.fuel-dt*(length>.1?.19:.015));if(state.fuel===0){state.riding=false;notify('Pickup ran out of fuel. Return home on foot.');}}
- if(state.riding){truck.root.position.set(state.x,.15,state.z);if(length>.1)truck.root.rotation.y=Math.atan2(-dz,dx);truck.update(length*speed*dt,0,false);}
- else {farmerAnchor.position.set(state.x,.12,state.z);if(length>.1)farmerAnchor.rotation.y=Math.atan2(dx,dz);}
+ const actualSpeed=Math.hypot(state.x-oldX,state.z-oldZ)/dt;
  farmerAnchor.visible=!state.riding;
- farmerRig?.update(dt,state.riding?0:length*speed);
- return length*speed;
+ farmerRig?.update(dt,state.riding?0:actualSpeed,performance.now()<workingUntil?'plant':null);
+ return actualSpeed;
 }
 function updateRaiders(dt){
  let hit=false;
@@ -265,9 +279,9 @@ function updateRaiders(dt){
   const distance=Math.hypot(state.x-agent.x,state.z-agent.z);
   if(zoneAt(state.x)==='red'&&distance<15&&!state.riding){tx=state.x;tz=state.z;}
   const dx=tx-agent.x,dz=tz-agent.z,mag=Math.hypot(dx,dz);
-  if(mag>.1){agent.x+=dx/mag*dt*3.4;agent.z+=dz/mag*dt*3.4;agent.root.rotation.y=Math.atan2(dx,dz);}
-  agent.root.position.set(agent.x,.12,agent.z);
-  if(!state.riding&&distance<3.4)hit=true;
+  if(mag>.1){moveBody(agent,dx/mag*dt*3.4,dz/mag*dt*3.4);agent.root.rotation.y=Math.atan2(dx,dz);}
+  agent.root.position.set(agent.x,.12,agent.z);agent.rig?.update(dt,mag>.1?3.4:0);
+  if(zoneAt(state.x)==='red'&&!state.riding&&distance<3.4)hit=true;
  }
  if(hit){state.health=Math.max(0,state.health-dt*8.5);if(Math.random()<dt*.3)notify('Hostile scavengers spotted you! Retreat or reach your vehicle.');}
 }
@@ -304,14 +318,16 @@ function tick(t){
  requestAnimationFrame(tick);
  if(!tick.last)tick.last=t;
  const dt=Math.min(.05,(t-tick.last)/1000);tick.last=t;
- if(!$('market').open){
+ if(!document.hidden&&!$('market').open){
    updatePlayer(dt);
    simulateNeeds(state,dt);
    updateRaiders(dt);
-   if(state.health<=0){handleResult(knockout(state));truckAt={x:16,z:-3};truck.root.position.set(16,.15,-3);}
+   if(state.health<=0){handleResult(knockout(state));truckAt.speed=0;}
  }
- const h=state.riding?12:7,depth=state.riding?24:camDistance;
- const target=new T.Vector3(state.x-Math.cos(yaw)*depth,h,state.z-Math.sin(yaw)*depth);
+ const depth=state.riding?18:camDistance,h=1.65+depth*Math.sin(pitch);
+ let distance=depth;
+ for(let d=1;d<depth;d+=.5){const cx=state.x-Math.cos(yaw)*d,cz=state.z-Math.sin(yaw)*d;if(blocked(cx,cz,.2)){distance=Math.max(1.5,d-.5);break;}}
+ const target=new T.Vector3(state.x-Math.cos(yaw)*distance,1.65+(h-1.65)*distance/depth,state.z-Math.sin(yaw)*distance);
  camera.position.lerp(target,Math.min(1,dt*5));
  camera.lookAt(state.x,1.65,state.z);
  elapsed+=dt;
@@ -321,6 +337,10 @@ function tick(t){
  if(elapsed-lastSaved>8){lastSaved=elapsed;save();}
  renderer.render(scene,camera);
 }
+renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();save();$('startup').hidden=false;$('startup').textContent='3D graphics paused. Progress saved. Reload this page to resume.';});
+camera.position.set(state.x-11,7,state.z);
 updateHUD();requestAnimationFrame(tick);
 window.addEventListener('pagehide',save);
 notify('Welcome to Frontier. Explore on foot or use your pickup. Your original farm save stays untouched.');
+
+document.addEventListener('visibilitychange',()=>{for(const k of Object.keys(input))input[k]=false;pointer=null;truckAt.speed=0;tick.last=0;save();});

@@ -10,7 +10,7 @@ export function zoneAt(x) { return x < SAFE_LINE ? 'safe' : x < RED_LINE ? 'fron
 export function newFrontierState() {
   return {
     version:1,x:0,z:0,coins:160,health:100,hunger:100,thirst:100,fuel:80,
-    riding:false,storage:{maize:4,water:5,rations:3,scrap:0,seeds:0,parts:0},
+    riding:false,vehicle:{x:16,z:-3,heading:Math.PI/2,speed:0},storage:{maize:4,water:5,rations:3,scrap:0,seeds:0,parts:0},
     pack:{maize:0,water:0,rations:0,scrap:0,seeds:0,parts:0},
     cooldowns:{},totalRaids:0,totalExtracted:0
   };
@@ -19,7 +19,8 @@ export function normaliseState(data) {
   const base=newFrontierState();
   if(!data || data.version!==1 || typeof data!=='object') return base;
   const finite=(v,def,min,max)=>typeof v==='number'&&Number.isFinite(v)?Math.max(min,Math.min(max,v)):def;
-  for(const k of ['x','z']) base[k]=finite(data[k],0,-110,110);
+  base.x=finite(data.x,0,-62,158);base.z=finite(data.z,0,-47,47);
+  base.vehicle={x:finite(data.vehicle?.x,16,-61,157),z:finite(data.vehicle?.z,-3,-46,46),heading:finite(data.vehicle?.heading,Math.PI/2,-10000,10000),speed:0};
   for(const k of ['coins','health','hunger','thirst','fuel']) base[k]=finite(data[k],base[k],0,k==='coins'?100000:100);
   for(const bucket of ['storage','pack']) for(const item of Object.keys(LABELS)) {
     base[bucket][item]=Math.floor(finite(data[bucket]?.[item],base[bucket][item],0,1000));
@@ -103,4 +104,11 @@ export function knockout(state){
   for(const item of Object.keys(LABELS))state.pack[item]=0;
   state.x=0;state.z=0;state.riding=false;state.health=70;state.hunger=Math.max(state.hunger,35);state.thirst=Math.max(state.thirst,35);
   return {ok:true,message:'Rescued to your protected farm. Expedition backpack lost; warehouse and farm coins retained.'};
+}
+
+export function packSupplies(state,item,qty=1){
+ if(zoneAt(state.x)!=='safe'||!['water','rations'].includes(item)||!Number.isInteger(qty)||qty<1)return {ok:false,message:'Pack supplies at home'};
+ if(state.storage[item]<qty)return {ok:false,message:'Not enough supplies in storage'};
+ state.storage[item]-=qty;state.pack[item]+=qty;
+ return {ok:true,message:'Packed '+qty+' '+LABELS[item]+' for your expedition'};
 }

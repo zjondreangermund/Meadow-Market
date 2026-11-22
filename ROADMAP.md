@@ -27,3 +27,9 @@
 - [x] Skyline Cup: 3D track, six rigged racehorses/jockeys, tactical lanes/pace/burst, Director cameras, replay and local history. GPU visual QA still required.
 - [ ] Trusted server simulation, tamper resistance and multiplayer matchmaking.
 - [ ] Photorealistic art direction / final bespoke farmer and animals.
+
+## Frontier first mobile browser candidate
+- [x] Separate mode, protected perimeter/building collisions, pickup acceleration/steering/brakes, parked-vehicle persistence, expedition supplies and extraction regression tests.
+- [x] Textured terrain, distant hills, batched scenery, animated scouts and camera pitch/obstruction handling.
+- [ ] Physical Android Chrome and iPhone Safari QA: loading, touch controls, complete extraction, reload, background resume, FPS and thermal measurements.
+- [ ] Authenticated authoritative session server, durable player/farm/inventory records, two-client synchronization and atomic secure game-currency trading.

@@ -106,3 +106,14 @@ Do not add cash-out, money prizes or real-money inventory promises without legal
 - Existing farm: `farm.html`; racing: `racing.html`; existing `index.html` remains the welcome page.
 - Frontier: `frontier.html` remains a distinct entry point; do not silently replace the home farm or horse racing.
 - No changes to `dist/economy.js`, `dist/farm.js` or existing game saves are needed for the initial isolated vertical slice.
+
+## Phase 1 browser candidate — 22 November 2026
+- Collision and sliding against buildings and the safe perimeter, traversable road gate, accelerated heading-relative pickup steering/braking and clear-space dismounts.
+- Pickup parking position/heading persists in the existing Frontier save. Reload retains eastern depot coordinates. Fuel depletion brakes in place; knockout no longer teleports the vehicle.
+- Exchange can pack food/water for expeditions; extraction remains repeat-safe and isolated from the original farm save.
+- Camera pitch/orbit and obstruction distance, smooth avatar turning, animated independent scouts and short harvesting interactions.
+- Original deterministic soil/wood/stone surfaces, distant rolling terrain and instanced scrub. Static scenery is batched by material for fewer draw submissions. These changes are not a verified photorealistic art upgrade.
+- Background input resets, modal input reset and explicit WebGL startup/context-loss messages.
+- Automated motion and full-scene tests exercise physical driving, no-fuel braking, dismount, packing, extraction and save isolation with the real Three.js scene and a stub renderer.
+- Cloud browser cannot create WebGL: rendered appearance, phone touch usability, iOS compatibility and FPS/thermal performance remain unverified. No installed APK/IPA is produced.
+- Still single-player/browser-local. Next phase: authenticated server account and persistence adapter, authoritative movement/actions, atomic trade storage, reconnect/idempotency and two-client integration tests. No online backend is presented as complete.
