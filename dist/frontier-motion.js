@@ -1,8 +1,11 @@
 // Shared deterministic movement/collision rules, independent of rendering.
-export const SOLIDS=[[-24,-20,14,11],[-11,-33,13,9],[-39,-32,6,6],[-3,19,3,3],[-10,-14,10,5],[104,-18,18,15],[82,21,5,6]];
+export const SOLIDS=[[104,-18,18,15],[82,21,5,6]];
+let homeObstacles=[];
+export function setHomeObstacles(obstacles,offsetX=0){homeObstacles=obstacles.map(o=>({x:o.x+offsetX,z:o.z,w:o.w,d:o.d}));}
 export function blocked(x,z,r=.5){
  if(x-r< -63||x+r>159||z-r< -48||z+r>48)return true;
  if(Math.abs(x-34)<r+.25&&Math.abs(z)>5.5-r)return true;
+ if(homeObstacles.some(o=>Math.abs(x-o.x)<o.w+r&&Math.abs(z-o.z)<o.d+r))return true;
  return SOLIDS.some(([cx,cz,w,d])=>Math.abs(x-cx)<w/2+r&&Math.abs(z-cz)<d/2+r);
 }
 export function moveBody(body,dx,dz,r=.5){

@@ -1,0 +1,7 @@
+/* Long-press controls must remain game inputs on Android and iOS. */
+html,body,button,canvas,.pad,.buttons,.bottom,.hud,.top,.vitals,.objectives{
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+ -webkit-tap-highlight-color:transparent;
+}
+button,canvas,.pad,.buttons{touch-action:none}
+input,textarea{user-select:text;-webkit-user-select:text;touch-action:auto}

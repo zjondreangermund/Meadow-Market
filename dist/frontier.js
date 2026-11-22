@@ -1,18 +1,23 @@
+import {installFrontierProps} from './frontier-props.js';
+import {installGameTouch} from './game-touch.js';
+import {createFrontierHome,HOME_OFFSET} from './frontier-home.js';
+import {installFarmEnvironment} from './farm-environment.js';
+import {createFrontierPickup} from './frontier-vehicle.js';
 import {finishFrontierLandscape} from './frontier-art.js';
-import {blocked,moveBody,stepVehicle,exitPoint} from './frontier-motion.js';
+import {blocked,setHomeObstacles,moveBody,stepVehicle,exitPoint} from './frontier-motion.js';
 import * as T from './three.module.js';
 import {loadFarmer} from './farmer-rig.js';
-import {createFarmVehicle} from './vehicle-models.js';
 import {SAVE_KEY,zoneAt,newFrontierState,normaliseState,simulateNeeds,collectAt,consume,depositAtHome,sellAtMarket,buySupplies,knockout,packSupplies,LABELS,SELL_PRICE} from './frontier-rules.js';
 
 // LOCAL VERTICAL SLICE ONLY. No multiplayer, PvP or real player accounts are simulated.
 const $=id=>document.getElementById(id);
+installGameTouch(document.body);
 let state;
 try { state=normaliseState(JSON.parse(localStorage.getItem(SAVE_KEY)||'null')); }
 catch { state=newFrontierState(); }
 const mobile=matchMedia('(pointer: coarse)').matches||innerWidth<780;
 const host=$('scene');
-const scene=new T.Scene();
+const scene=new T.Scene();installFarmEnvironment(scene);
 scene.background=new T.Color('#aec7c7');
 scene.fog=new T.FogExp2('#abbcb7',.0055);
 const camera=new T.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
@@ -67,8 +72,8 @@ box(52,-.26,0,36,.45,150,m.wild);
 box(121,-.27,0,100,.45,150,m.red);
 box(33.8,.025,0,.35,.12,150,m.stripe);
 box(70,.025,0,.25,.12,150,m.raider);
-box(39,.04,0,184,.12,9,m.road);
-for(let i=-7;i<17;i++)box(i*10,.14,0,3,.02,.09,m.clay);
+box(84,.04,0,150,.12,9,m.road);box(12,.08,3,10,.08,9,m.road);
+for(let i=1;i<17;i++)box(i*10,.14,0,3,.02,.09,m.clay);
 for(const z of [-49,49])fence(-12,z,88);
 for(const z of [-38,-22,-9,9,22,38]){
   if(Math.abs(z)<9)continue;
@@ -77,36 +82,13 @@ for(const z of [-38,-22,-9,9,22,38]){
 for(const z of [-5.9,5.9])box(34,1.5,z,.34,3,.4,m.darkWood);
 box(34,3.15,0,.35,.52,12,m.darkWood);
 
-// Homestead buildings and fields.
-box(-24,2,-20,14,4,11,m.wood);roof(-24,-20,16,11,5,m.roof);
-box(-24,1.9,-14.42,3.2,3.2,.3,m.darkWood);
-box(-26,2.4,-25.6,2,1.5,.1,m.glass);
-box(-11,1.9,-33,13,3.8,9,m.stone);roof(-11,-33,14,9,4.5,m.roof);
-box(-11,1.7,-28.4,2.6,3,.25,m.darkWood);
-cylinderAt(-39,3,-32,3,3,6,m.metal);cylinderAt(-39,6.35,-32,3.25,2.9,.75,m.roof);
-for(let x=-35;x<=-5;x+=3.8)for(let z=13;z<=35;z+=4){
- box(x,.14,z,1.7,.1,3,m.dirt);
- for(let j=0;j<3;j++){
-  const px=x+(j-1)*.39;
-  cylinderAt(px,.9,z,.07,.11,1.1,m.cropLeaf);
-  ball(px,.76,z,.26,.35,.3,m.cropLeaf);
-  ball(px,1.22,z,.13,.25,.14,m.cropCob);
- }
-}
-cylinderAt(-3,1.4,19,1.25,1.45,2.6,m.stone);
-cylinderAt(-3,2.8,19,1.6,1.4,.23,m.darkWood);
-box(-3,4,19,.14,2,.14,m.wood);
-
-// Village market: crate tables, canopy and loading point.
-box(-10,.68,-14,9,1.2,4,m.wood);
-box(-10,3,-14,11,.18,6,m.clay);
-for(const x of [-15,-5])for(const z of [-17,-11])box(x,1.7,z,.18,3.4,.18,m.metal);
-for(let i=0;i<6;i++)box(-13+i*1.2,1.4,-14,.8,.5,.7,i%2?m.crop:m.clay);
-
+// The protected home now shares the original Meadow Market farm scene.
+const home=createFrontierHome(scene);setHomeObstacles(home.obstacles,HOME_OFFSET);
+if(blocked(state.x,state.z)){state.x=-16;state.z=6;}
 // Weathered station and derelict supply depot.
 box(104,1.9,-18,18,3.8,15,m.stone);roof(104,-18,19,15,4.2,m.metal);
 box(104,1.7,-10.4,6,3.1,.2,m.darkWood);
-for(let i=0;i<8;i++)box(94+i*3,0.7,-1,2.1,1.4,1.5,m.crate);
+const frontierProps=installFrontierProps(scene);frontierProps.ready.catch(()=>notify('Supply crate textures could not load. Reload to retry.'));
 box(82,1.4,21,5,2.8,6,m.darkWood);
 box(82,3,21,5.7,.25,7,m.metal);
 for(let i=0;i<6;i++)box(46+i*1.8,.7,18+i%2*2,1.5,1.2,1.5,m.metal);
@@ -115,7 +97,7 @@ for(let i=0;i<6;i++)box(46+i*1.8,.7,18+i%2*2,1.5,1.2,1.5,m.metal);
 let seed=14025;
 function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
 for(let i=0;i<98;i++){
- const x=-62+rand()*224,z=-67+rand()*134;
+ const x=40+rand()*119,z=-46+rand()*92;
  if(Math.abs(z)<10||x>-40&&x<0&&z>9&&z<39||Math.abs(x-104)<16&&Math.abs(z+18)<16)continue;
  const h=2.3+rand()*4;
  cylinderAt(x,h*.42,z,.19,.25,h*.84,m.trunk);
@@ -131,9 +113,10 @@ for(let i=0;i<65;i++){
 
 // Location markers are visual only; interaction distance and action rules are verified by client.
 const nodes=[
- {type:'crop',title:'Maize field',x:-19,z:20},
- {type:'well',title:'Farm water well',x:-3,z:19},
- {type:'market',title:'Farm exchange',x:-10,z:-14},
+ {type:'crop',title:'Maize field',x:-24.4,z:20},
+ {type:'well',title:'Farm water well',x:-34,z:-9},
+ {type:'market',title:'Farm exchange',x:-43,z:-7},
+ {type:'home',title:'Original farm management',x:-16,z:6},
  {type:'vehicle',title:'Pickup truck',x:16,z:-3},
  {type:'scrap',title:'Scrapyard',x:55,z:18},
  {type:'seeds',title:'Seed cache',x:82,z:21},
@@ -157,9 +140,9 @@ box(.2,.52,0,.22,.85,.2,m.darkWood,standIn);
 box(0,2.5,0,.94,.12,.92,m.darkWood,standIn);
 let farmerRig=null;
 loadFarmer('man').then(rig=>{farmerRig=rig;farmerAnchor.add(rig.root);standIn.visible=false;}).catch(e=>console.warn('Using farmer placeholder:',e.message));
-const truck=createFarmVehicle('pickup','#74886e',{style:'touring'});
+const truck=createFrontierPickup();
 truck.root.position.set(16,.14,-3);scene.add(truck.root);
-truck.ready.catch(e=>console.warn('Pickup model fallback:',e.message));
+truck.ready.catch(e=>notify('Pickup model could not load. Reload to retry.'));
 const truckAt=state.vehicle;
 truck.root.position.set(truckAt.x,.15,truckAt.z);truck.root.rotation.y=truckAt.heading;
 const raiders=[];
@@ -193,6 +176,7 @@ function act(){
  if($('market').open)return;
  near=nearestNode();
  if(!near){notify('Move closer to a farm, supply or raid marker.');return;}
+ if(near.type==='home'){save();window.location.href='./farm.html';return;}
  if(near.type==='market'){refreshMarket();for(const k of Object.keys(input))input[k]=false;$('market').showModal();return;}
  if(near.type==='vehicle'){toggleVehicle();return;}
  const result=collectAt(state,near.type,Date.now());if(result.ok)workingUntil=performance.now()+900;handleResult(result);
@@ -203,6 +187,7 @@ function toggleVehicle(){
   state.riding=false;truckAt.speed=0;Object.assign(state,exit);notify('Exited the pickup');save();return;
  }
  if(dist(truckAt.x,truckAt.z)>8){notify('Walk to your parked pickup first.');return;}
+ if(!truck.loaded){notify('Pickup model is loading. Please wait.');return;}
  if(state.fuel<1){notify('Out of fuel. Refill at the exchange.');return;}
  truckAt.speed=0;state.riding=true;state.x=truckAt.x;state.z=truckAt.z;notify('Driving pickup. Use direction controls.');save();
 }
@@ -330,7 +315,7 @@ function tick(t){
  const target=new T.Vector3(state.x-Math.cos(yaw)*distance,1.65+(h-1.65)*distance/depth,state.z-Math.sin(yaw)*distance);
  camera.position.lerp(target,Math.min(1,dt*5));
  camera.lookAt(state.x,1.65,state.z);
- elapsed+=dt;
+ elapsed+=dt;home.update(dt,state,elapsed);
  for(const n of nodes)n.marker.rotation.y+=dt*.8;
  if(t>toastUntil)$('toast').classList.remove('visible');
  uiElapsed+=dt;if(uiElapsed>.3){uiElapsed=0;updateHUD();}
