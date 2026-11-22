@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#152b22"><meta name="description" content="Meadow Market Frontier mobile-first 3D survival prototype">
+<title>Meadow Market · Frontier Prototype</title>
+<link rel="stylesheet" href="./frontier.css">
+</head>
+<body>
+<div id="scene" aria-label="Playable 3D Frontier prototype"></div>
+<header class="top">
+  <div class="brand"><a href="./index.html" title="Meadow Market home">←</a><div><strong>MEADOW MARKET</strong><small>FRONTIER · FIELD TEST</small></div></div>
+  <div class="right"><span id="zone">PROTECTED FARM</span><strong id="coins">160 ◈</strong></div>
+</header>
+<section class="vitals" aria-label="Survival status">
+  <div><span>HEALTH</span><meter id="health" min="0" max="100" value="100"></meter></div>
+  <div><span>FOOD</span><meter id="hunger" min="0" max="100" value="100"></meter></div>
+  <div><span>WATER</span><meter id="thirst" min="0" max="100" value="100"></meter></div>
+  <div><span>FUEL</span><meter id="fuel" min="0" max="100" value="80"></meter></div>
+  <p id="pack">BACKPACK · EMPTY</p>
+</section>
+<div class="objectives"><div id="objective">Start at the homestead. Harvest crops, refill water, then head through the gate.</div><div id="proximity">Move toward a marked location to interact.</div></div>
+<canvas id="map" width="182" height="112" aria-label="Area overview"></canvas>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="bottom">
+  <div class="pad" aria-label="Movement pad">
+    <button data-move="forward" class="north" aria-label="Forward">▲</button>
+    <button data-move="left" aria-label="Left">◀</button>
+    <button data-move="backward" aria-label="Backward">▼</button>
+    <button data-move="right" aria-label="Right">▶</button>
+  </div>
+  <div class="buttons">
+    <button id="use" class="primary">INTERACT <span>E</span></button>
+    <button id="drive">VEHICLE <span>V</span></button>
+    <button id="run" class="hold">SPRINT <span>SHIFT</span></button>
+    <button id="eat">EAT <span>Q</span></button>
+    <button id="drink">DRINK <span>R</span></button>
+  </div>
+</div>
+<dialog id="market">
+  <button id="closeMarket" class="close" aria-label="Close market">✕</button>
+  <small>PROTECTED HOMESTEAD</small><h2>Farm Supply Exchange</h2>
+  <p>Local simulation only. These farm coins and trades have no cash value and are not multiplayer orders.</p>
+  <div id="balances"></div>
+  <h3>Sell</h3><div id="sellActions" class="market-grid"></div>
+  <h3>Buy</h3><div id="buyActions" class="market-grid"></div>
+  <button id="deposit" class="wide">Secure expedition backpack</button>
+</dialog>
+<div id="footnote">SINGLE-PLAYER VERTICAL SLICE · Server multiplayer and real PvP are not live · Drag to turn camera · WASD / touch to move</div>
+<script type="module" src="./frontier.js"></script>
+</body></html>
