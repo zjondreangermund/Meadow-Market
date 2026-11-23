@@ -1,3 +1,5 @@
+import {CARBINE,fireWeapon,traceShot,startReload,tickWeapon,buyAmmo} from './frontier-combat.js';
+import {createFrontierGun,poseGunArms} from './frontier-gun.js';
 import {installFrontierProps} from './frontier-props.js';
 import {installGameTouch} from './game-touch.js';
 import {createFrontierHome,HOME_OFFSET} from './frontier-home.js';
@@ -151,10 +153,13 @@ for(let i=0;i<3;i++){
  box(0,1,0,.65,1.25,.44,m.raider,root);
  ball(0,1.94,0,.32,.33,.32,m.stone,root);
  box(0,1.7,.28,.73,.20,.15,m.darkWood,root);
- const agent={root,x:94+i*7,z:-24+i*8,phase:i*2,rig:null};
+ const agent={id:'scout-'+i,root,x:90+i*8,z:4+i*4,spawnX:90+i*8,spawnZ:4+i*4,phase:i*2,rig:null,health:100,respawnLeft:0};
  loadFarmer('man').then(rig=>{root.clear();root.add(rig.root);agent.rig=rig;}).catch(()=>{});
  raiders.push(agent);
 }
+const gun=createFrontierGun(farmerAnchor);
+let aiming=false,fireHeld=false,aimPitch=0,hitUntil=0;
+const raycaster=new T.Raycaster();
 const input={forward:false,backward:false,left:false,right:false,sprint:false};
 const moveByKey={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',ShiftLeft:'sprint',ShiftRight:'sprint'};
 let workingUntil=0;
@@ -173,6 +178,7 @@ function nearestNode(){
 }
 function handleResult(r){notify(r.message);if(r.ok){save();refreshMarket();}}
 function act(){
+ stopCombat();
  if($('market').open)return;
  near=nearestNode();
  if(!near){notify('Move closer to a farm, supply or raid marker.');return;}
@@ -182,6 +188,7 @@ function act(){
  const result=collectAt(state,near.type,Date.now());if(result.ok)workingUntil=performance.now()+900;handleResult(result);
 }
 function toggleVehicle(){
+ stopCombat();
  if(state.riding){
   const exit=exitPoint(truckAt);if(!exit){notify('No safe place to exit here. Move the pickup.');return;}
   state.riding=false;truckAt.speed=0;Object.assign(state,exit);notify('Exited the pickup');save();return;
@@ -203,6 +210,7 @@ function buildMarket(){
   const b=document.createElement('button');b.textContent='Buy '+(item==='fuel'?'10 fuel':'1 '+LABELS[item])+' · '+price+' ◈';
   b.onclick=()=>handleResult(buySupplies(state,item));$('buyActions').append(b);
  }
+ const ammo=document.createElement('button');ammo.textContent='Ammo +24 · 12 ◈';ammo.onclick=()=>handleResult(buyAmmo(state));$('buyActions').append(ammo);
  for(const item of ['rations','water']){const b=document.createElement('button');b.textContent='Pack 1 '+LABELS[item];b.onclick=()=>handleResult(packSupplies(state,item));$('buyActions').append(b);}
  $('deposit').onclick=()=>handleResult(depositAtHome(state));
  $('closeMarket').onclick=()=>$('market').close();
@@ -211,6 +219,10 @@ buildMarket();
 $('use').onclick=act;
 $('drive').onclick=toggleVehicle;
 $('eat').onclick=()=>handleResult(consume(state,'rations'));
+$('aim').onclick=()=>toggleAim();
+$('reload').onclick=()=>reloadGun();
+$('fire').addEventListener('pointerdown',e=>{e.preventDefault();$('fire').setPointerCapture(e.pointerId);beginFire();});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])$('fire').addEventListener(type,()=>{fireHeld=false;});
 $('drink').onclick=()=>handleResult(consume(state,'water'));
 function bindHold(button,key){
  button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);input[key]=true;});
@@ -221,16 +233,20 @@ bindHold($('run'),'sprint');
 window.addEventListener('keydown',e=>{
  if($('market').open){if(e.code==='Escape')$('market').close();return;}
  if(moveByKey[e.code]){e.preventDefault();input[moveByKey[e.code]]=true;}
+ if(e.code==='Space')e.preventDefault();
  if(e.repeat)return;
  if(e.code==='KeyE')act();if(e.code==='KeyV')toggleVehicle();
  if(e.code==='KeyQ')handleResult(consume(state,'rations'));
- if(e.code==='KeyR')handleResult(consume(state,'water'));
+ if(e.code==='KeyT')handleResult(consume(state,'water'));
+ if(e.code==='KeyR'){e.preventDefault();reloadGun();}
+ if(e.code==='KeyF'){e.preventDefault();toggleAim();}
+ if(e.code==='Space'){e.preventDefault();beginFire();}
 });
-window.addEventListener('keyup',e=>{if(moveByKey[e.code])input[moveByKey[e.code]]=false;});
-window.addEventListener('blur',()=>{for(const k of Object.keys(input))input[k]=false;save();});
+window.addEventListener('keyup',e=>{if(moveByKey[e.code])input[moveByKey[e.code]]=false;if(e.code==='Space')fireHeld=false;});
+window.addEventListener('blur',()=>{for(const k of Object.keys(input))input[k]=false;stopCombat();save();});
 let pointer=null;
-renderer.domElement.addEventListener('pointerdown',e=>{pointer={id:e.pointerId,x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});
-renderer.domElement.addEventListener('pointermove',e=>{if(pointer?.id===e.pointerId){yaw-=((e.clientX-pointer.x)*.008);pitch=T.MathUtils.clamp(pitch+(e.clientY-pointer.y)*.004,.18,.95);pointer.x=e.clientX;pointer.y=e.clientY;}});
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.button===2){e.preventDefault();toggleAim();return;}pointer={id:e.pointerId,x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointermove',e=>{if(pointer?.id===e.pointerId){yaw-=((e.clientX-pointer.x)*.008);if(aiming)aimPitch=T.MathUtils.clamp(aimPitch+(e.clientY-pointer.y)*.004,-.45,.55);else pitch=T.MathUtils.clamp(pitch+(e.clientY-pointer.y)*.004,.18,.95);pointer.x=e.clientX;pointer.y=e.clientY;}});
 for(const event of ['pointerup','pointercancel'])renderer.domElement.addEventListener(event,()=>{pointer=null;});
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();camDistance=T.MathUtils.clamp(camDistance+Math.sign(e.deltaY)*2,9,27);},{passive:false});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
@@ -245,21 +261,82 @@ function updatePlayer(dt){
   truck.root.position.set(truckAt.x,.15,truckAt.z);truck.root.rotation.y=truckAt.heading;
   truck.update(Math.sign(truckAt.speed)*distance,r,Object.values(state.pack).some(v=>v>0));
  }else{
-  const speed=input.sprint?6.3:3.8;
+  const speed=aiming?2.1:input.sprint?6.3:3.8;
   moveBody(state,(f*Math.cos(yaw)-r*Math.sin(yaw))*speed*dt,(f*Math.sin(yaw)+r*Math.cos(yaw))*speed*dt);
   farmerAnchor.position.set(state.x,.12,state.z);
-  if(length>.05){const target=Math.atan2(state.x-oldX,state.z-oldZ);farmerAnchor.rotation.y+=Math.atan2(Math.sin(target-farmerAnchor.rotation.y),Math.cos(target-farmerAnchor.rotation.y))*Math.min(1,dt*12);}
+  if(aiming||length>.05){const target=aiming?Math.atan2(Math.cos(yaw),Math.sin(yaw)):Math.atan2(state.x-oldX,state.z-oldZ);farmerAnchor.rotation.y+=Math.atan2(Math.sin(target-farmerAnchor.rotation.y),Math.cos(target-farmerAnchor.rotation.y))*Math.min(1,dt*12);}
  }
- const actualSpeed=Math.hypot(state.x-oldX,state.z-oldZ)/dt;
+ const actualSpeed=dt>0?Math.hypot(state.x-oldX,state.z-oldZ)/dt:0;
  farmerAnchor.visible=!state.riding;
- farmerRig?.update(dt,state.riding?0:actualSpeed,performance.now()<workingUntil?'plant':null);
+ farmerRig?.update(dt,state.riding?0:actualSpeed,!aiming&&performance.now()<workingUntil?'plant':null);
  return actualSpeed;
+}
+// Combat raycasts ignore actors/markers while retaining actual scenery occlusion.
+function wallDistance(origin,direction){
+ scene.updateMatrixWorld(true);raycaster.set(origin,direction);raycaster.far=CARBINE.range;
+ const ignored=new Set([farmerAnchor,...raiders.map(a=>a.root),...home.animals.map(a=>a.g)]);
+ const objects=[];
+ scene.traverse(o=>{if(!o.isMesh||!o.material)return;let p=o;while(p){if(ignored.has(p)||!p.visible)return;p=p.parent;}const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.some(m=>m.isMeshStandardMaterial))objects.push(o);});
+ return raycaster.intersectObjects(objects,false)[0]?.distance??Infinity;
+}
+const tracer=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:'#ffe3a0',transparent:true,opacity:.8}));scene.add(tracer);tracer.visible=false;let tracerLeft=0;
+function stopCombat(){fireHeld=false;aiming=false;}
+function toggleAim(){if(state.riding||$('market').open)return;aiming=!aiming;fireHeld=false;updateCombatHUD();}
+function beginFire(){if(document.hidden||$('market').open||state.riding||zoneAt(state.x)==='safe')return;aiming=true;fireHeld=true;shoot();}
+function reloadGun(){if(document.hidden||$('market').open)return;const result=startReload(state);if(result.ok){fireHeld=false;aiming=true;}handleResult(result);updateCombatHUD();}
+function updateCamera(dt,snap=false){
+ if(aiming&&!state.riding){
+  let depth=4.6;for(let d=.7;d<depth;d+=.25)if(blocked(state.x-Math.cos(yaw)*d,state.z-Math.sin(yaw)*d,.2)){depth=Math.max(.7,d-.3);break;}
+  const target=new T.Vector3(state.x-Math.cos(yaw)*depth-Math.sin(yaw)*.75,2.35,state.z-Math.sin(yaw)*depth+Math.cos(yaw)*.75);
+  camera.position.lerp(target,snap?1:Math.min(1,dt*12));
+  camera.lookAt(state.x+Math.cos(yaw)*40,1.7-aimPitch*40,state.z+Math.sin(yaw)*40);
+  camera.fov=48;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);return;
+ }
+ camera.fov=62;camera.updateProjectionMatrix();
+ const depth=state.riding?18:camDistance,h=1.65+depth*Math.sin(pitch);
+ let distance=depth;
+ for(let d=1;d<depth;d+=.5){const cx=state.x-Math.cos(yaw)*d,cz=state.z-Math.sin(yaw)*d;if(blocked(cx,cz,.2)){distance=Math.max(1.5,d-.5);break;}}
+ const target=new T.Vector3(state.x-Math.cos(yaw)*distance,1.65+(h-1.65)*distance/depth,state.z-Math.sin(yaw)*distance);
+ camera.position.lerp(target,Math.min(1,dt*5));
+ camera.lookAt(state.x,1.65,state.z);
+ camera.updateMatrixWorld(true);
+}
+function shoot(){
+ if(document.hidden||$('market').open)return;
+ if(state.weapon.cooldown>1e-8||state.weapon.reloadLeft>0)return;
+ updateCamera(0,true);
+ farmerAnchor.position.set(state.x,.12,state.z);farmerAnchor.rotation.y=Math.atan2(Math.cos(yaw),Math.sin(yaw));
+ gun.update(0,{aiming:true,visible:!state.riding});scene.updateMatrixWorld(true);
+ raycaster.setFromCamera(new T.Vector2(0,0),camera);
+ const cameraOrigin=raycaster.ray.origin.clone(),cameraDirection=raycaster.ray.direction.clone();
+ const wall=wallDistance(cameraOrigin,cameraDirection),target=traceShot(cameraOrigin,cameraDirection,raiders,wall);
+ const aimPoint=cameraOrigin.addScaledVector(cameraDirection,target?.distance??Math.min(CARBINE.range,wall));
+ const origin=gun.muzzle.getWorldPosition(new T.Vector3()),direction=aimPoint.sub(origin).normalize();
+ // Check from the player to the muzzle as well: a barrel touching a wall cannot
+ // create bullets on its far side even if the shoulder camera sees around it.
+ const shoulder=new T.Vector3(state.x,1.65,state.z),toMuzzle=origin.clone().sub(shoulder),muzzleLength=toMuzzle.length();
+ const closeWall=wallDistance(shoulder,toMuzzle.normalize());
+ const result=fireWeapon(state,origin,direction,raiders,closeWall<muzzleLength?0:wallDistance(origin,direction));
+ if(!result.ok){if(result.message)notify(result.message);fireHeld=false;updateCombatHUD();return;}
+ gun.shot();tracer.geometry.setFromPoints([origin,origin.clone().addScaledVector(direction,result.distance)]);tracer.visible=true;tracerLeft=.07;
+ if(result.hit){hitUntil=performance.now()+140;$('crosshair').classList.add('hit');notify(result.message);}
+ save();updateCombatHUD();
+}
+function updateCombatHUD(){
+ const safe=zoneAt(state.x)==='safe',w=state.weapon;
+ $('ammo').textContent=w.magazine+' / '+w.reserve;
+ $('weaponStatus').textContent=state.riding?'ON FOOT TO SHOOT':safe?'PROTECTED · WEAPON SAFE':w.reloadLeft>0?'RELOADING '+w.reloadLeft.toFixed(1)+'s':aiming?'FIELDGUARD · AIMING':'FIELDGUARD · READY';
+ $('crosshair').hidden=!aiming||state.riding;
+ $('aim').textContent=aiming?'LOWER':'AIM';$('fire').disabled=safe||state.riding||w.reloadLeft>0;
+ $('reload').disabled=state.riding||w.reloadLeft>0||w.magazine===CARBINE.magazine||w.reserve===0;
 }
 function updateRaiders(dt){
  let hit=false;
  for(const agent of raiders){
   agent.phase+=dt*.4;
-  const homeX=96+Math.sin(agent.phase)*8,homeZ=-19+Math.cos(agent.phase)*8;
+  if(agent.health<=0){agent.respawnLeft=Math.max(0,agent.respawnLeft-dt);agent.root.visible=agent.respawnLeft>44.4;agent.root.rotation.z=(45-agent.respawnLeft)*2;
+   if(agent.respawnLeft===0){agent.health=100;agent.x=agent.spawnX;agent.z=agent.spawnZ;agent.root.rotation.z=0;agent.root.visible=true;}continue;}
+  const homeX=agent.spawnX+Math.sin(agent.phase)*3,homeZ=agent.spawnZ+Math.cos(agent.phase)*3;
   let tx=homeX,tz=homeZ;
   const distance=Math.hypot(state.x-agent.x,state.z-agent.z);
   if(zoneAt(state.x)==='red'&&distance<15&&!state.riding){tx=state.x;tz=state.z;}
@@ -297,6 +374,7 @@ function updateHUD(){
  else if(zone==='frontier')$('objective').textContent='Search the scrapyard or seed cache. Bring resources back safely.';
  else $('objective').textContent='Raid the supply depot and escape the scavenger patrols before being knocked out!';
  $('drive').textContent=state.riding?'EXIT VEHICLE':'VEHICLE';
+ updateCombatHUD();
  updateMap();
 }
 function tick(t){
@@ -304,17 +382,18 @@ function tick(t){
  if(!tick.last)tick.last=t;
  const dt=Math.min(.05,(t-tick.last)/1000);tick.last=t;
  if(!document.hidden&&!$('market').open){
+   if(tickWeapon(state.weapon,dt)){save();updateCombatHUD();}
    updatePlayer(dt);
    simulateNeeds(state,dt);
    updateRaiders(dt);
-   if(state.health<=0){handleResult(knockout(state));truckAt.speed=0;}
+   if(fireHeld)shoot();
+   if(state.health<=0){stopCombat();state.weapon.reloadLeft=0;handleResult(knockout(state));truckAt.speed=0;}
  }
- const depth=state.riding?18:camDistance,h=1.65+depth*Math.sin(pitch);
- let distance=depth;
- for(let d=1;d<depth;d+=.5){const cx=state.x-Math.cos(yaw)*d,cz=state.z-Math.sin(yaw)*d;if(blocked(cx,cz,.2)){distance=Math.max(1.5,d-.5);break;}}
- const target=new T.Vector3(state.x-Math.cos(yaw)*distance,1.65+(h-1.65)*distance/depth,state.z-Math.sin(yaw)*distance);
- camera.position.lerp(target,Math.min(1,dt*5));
- camera.lookAt(state.x,1.65,state.z);
+ updateCamera(dt);
+ gun.update(dt,{aiming,reload:state.weapon.reloadLeft>0?1-state.weapon.reloadLeft/CARBINE.reloadSeconds:0,visible:!state.riding});
+ poseGunArms(farmerRig,farmerAnchor,aiming,state.weapon.reloadLeft>0?1-state.weapon.reloadLeft/CARBINE.reloadSeconds:0);
+ tracerLeft=Math.max(0,tracerLeft-dt);tracer.visible=tracerLeft>0;
+ if(t>hitUntil)$('crosshair').classList.remove('hit');
  elapsed+=dt;home.update(dt,state,elapsed);
  for(const n of nodes)n.marker.rotation.y+=dt*.8;
  if(t>toastUntil)$('toast').classList.remove('visible');
@@ -328,4 +407,4 @@ updateHUD();requestAnimationFrame(tick);
 window.addEventListener('pagehide',save);
 notify('Welcome to Frontier. Explore on foot or use your pickup. Your original farm save stays untouched.');
 
-document.addEventListener('visibilitychange',()=>{for(const k of Object.keys(input))input[k]=false;pointer=null;truckAt.speed=0;tick.last=0;save();});
+document.addEventListener('visibilitychange',()=>{for(const k of Object.keys(input))input[k]=false;stopCombat();pointer=null;truckAt.speed=0;tick.last=0;save();});

@@ -22,6 +22,11 @@
   <p id="pack">BACKPACK · EMPTY</p>
 </section>
 <div class="objectives"><div id="objective">Start at the homestead. Harvest crops, refill water, then head through the gate.</div><div id="proximity">Move toward a marked location to interact.</div></div>
+<div id="crosshair" aria-label="Aim reticle" hidden><i></i><b></b></div>
+<section id="combat" aria-label="Weapon controls">
+ <div class="weapon-readout"><strong id="ammo">12 / 48</strong><small id="weaponStatus">FIELDGUARD · READY</small></div>
+ <div class="combat-buttons"><button id="aim">AIM</button><button id="fire">FIRE</button><button id="reload">RELOAD</button></div>
+</section>
 <canvas id="map" width="182" height="112" aria-label="Area overview"></canvas>
 <div id="toast" role="status" aria-live="polite"></div>
 <div class="bottom">
@@ -36,7 +41,7 @@
     <button id="drive">VEHICLE <span>V</span></button>
     <button id="run" class="hold">SPRINT <span>SHIFT</span></button>
     <button id="eat">EAT <span>Q</span></button>
-    <button id="drink">DRINK <span>R</span></button>
+    <button id="drink">DRINK <span>T</span></button>
   </div>
 </div>
 <dialog id="market">
@@ -49,6 +54,6 @@
   <button id="deposit" class="wide">Secure expedition backpack</button>
 </dialog>
 <a id="homeFarm" href="./farm.html">Your farm</a>
-<div id="footnote">SINGLE-PLAYER VERTICAL SLICE · Server multiplayer and real PvP are not live · Drag to look · Pickup: forward/reverse + steer · WASD / touch to move</div>
+<div id="footnote">SINGLE-PLAYER VERTICAL SLICE · Server multiplayer and real PvP are not live · F aim · Hold FIRE / Space · R reload · T water · Drag to look · Pickup: forward/reverse + steer · WASD / touch to move</div>
 <script type="module" src="./frontier.js"></script>
 </body></html>

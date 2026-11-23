@@ -37,3 +37,6 @@
 - [x] Imported CC0 pickup with animated wheel assemblies, textured Poly Haven crates, original tractor/farm props, source licence records.
 - [x] Game-surface text-selection/context-menu prevention for Android/iPhone controls.
 - [ ] Phone visual and long-press playtest; further mobile-ready imported vegetation/buildings and vehicle interior assets.
+- [x] Local PvE gunplay: original 3D carbine, aim/fire/reload touch controls, ammo/resupply, recoil/flash/tracer, scenery obstruction and hostile-scout damage/defeat.
+- [ ] Physical phone aim/reload/multi-touch and rendered gun/arm-pose QA; audio and further weapon animations.
+- [ ] Server-authoritative combat validation and multiplayer synchronization before any online PvP.

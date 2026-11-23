@@ -1,15 +1,15 @@
+import {freshWeapon,restoreWeapon} from './frontier-combat.js';
+import {zoneAt} from './frontier-zones.js';
+export {SAFE_LINE,RED_LINE,zoneAt} from './frontier-zones.js';
 // Meadow Market Frontier local vertical-slice rules.
 // This file is not a multiplayer security boundary: server-side validation is required.
-export const SAFE_LINE = 34;
-export const RED_LINE = 70;
 export const SAVE_KEY = 'meadow-frontier-prototype-v1'; // Never overwrite meadow-cycle-v2.
 
 export const LABELS = {maize:'Maize',water:'Water',rations:'Food',scrap:'Scrap metal',seeds:'Rare seeds',parts:'Machine parts'};
 export const SELL_PRICE = {maize:7,scrap:14,seeds:45,parts:65};
-export function zoneAt(x) { return x < SAFE_LINE ? 'safe' : x < RED_LINE ? 'frontier' : 'red'; }
 export function newFrontierState() {
   return {
-    version:1,x:0,z:0,coins:160,health:100,hunger:100,thirst:100,fuel:80,
+    weapon:freshWeapon(),version:1,x:0,z:0,coins:160,health:100,hunger:100,thirst:100,fuel:80,
     riding:false,vehicle:{x:16,z:-3,heading:Math.PI/2,speed:0},storage:{maize:4,water:5,rations:3,scrap:0,seeds:0,parts:0},
     pack:{maize:0,water:0,rations:0,scrap:0,seeds:0,parts:0},
     cooldowns:{},totalRaids:0,totalExtracted:0
@@ -28,6 +28,7 @@ export function normaliseState(data) {
   for(const key of ['totalRaids','totalExtracted']) base[key]=Math.floor(finite(data[key],0,0,100000));
   // Vehicle never starts moving after reload.
   base.riding=false;
+  base.weapon=restoreWeapon(data.weapon);
   // Only known object keys, no untrusted prototype keys.
   for(const key of ['crop','well','scrap','seeds','raid']) {
     base.cooldowns[key]=finite(data.cooldowns?.[key],0,0,Number.MAX_SAFE_INTEGER);

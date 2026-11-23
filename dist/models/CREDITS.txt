@@ -63,3 +63,8 @@ Licence: CC0 1.0, https://polyhaven.com/license
 Bundled as props/frontier-crate.glb with original geometry; diffuse, ARM and normal maps
 resized to 512px JPEG and embedded for mobile. No external texture requests.
 Frontier pickup licence/source: models/vehicles/ASSETS.md.
+
+Fieldguard carbine (frontier-gun.js), 23 November 2026:
+Original fictional game prop authored for Meadow Market: rounded mesh stock, receiver,
+grips, removable magazine, sights, barrel and muzzle-flash effect. No third-party
+weapon model, brand, sound or texture used. Existing farmer rig licence unchanged.
