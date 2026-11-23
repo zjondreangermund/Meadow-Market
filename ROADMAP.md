@@ -40,3 +40,6 @@
 - [x] Local PvE gunplay: original 3D carbine, aim/fire/reload touch controls, ammo/resupply, recoil/flash/tracer, scenery obstruction and hostile-scout damage/defeat.
 - [ ] Physical phone aim/reload/multi-touch and rendered gun/arm-pose QA; audio and further weapon animations.
 - [ ] Server-authoritative combat validation and multiplayer synchronization before any online PvP.
+- [x] Replace human enemy scouts with the user's actual Afterfall Leaper asset and mobile predator/pounce states.
+- [ ] Add Afterfall Spider Gunner, SKYHOUND and GRAVEDROP in separate tested phases; no human combat NPCs.
+- [ ] Leaper device/visual QA, production crawl animation and server-authoritative machine AI before multiplayer claims.

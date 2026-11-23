@@ -68,3 +68,9 @@ Fieldguard carbine (frontier-gun.js), 23 November 2026:
 Original fictional game prop authored for Meadow Market: rounded mesh stock, receiver,
 grips, removable magazine, sights, barrel and muzzle-flash effect. No third-party
 weapon model, brand, sound or texture used. Existing farmer rig licence unchanged.
+
+Afterfall Leaper — 23 November 2026:
+User-provided Leaper_Standard_Final(1).blend, with the user's Afterfall-Mobile V26
+fitted combat armor pass. Original 33-bone final rig and three source actions retained.
+Source/limitations and reproduction notes: models/enemies/ASSETS.md.
+This project asset is not relabelled CC0. The original uploaded file is unchanged.

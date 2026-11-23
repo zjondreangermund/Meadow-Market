@@ -13,7 +13,7 @@ jobs:
           node-version: '22'
       - name: Validate JavaScript syntax
         run: |
-          for f in dist/{coat-variants,garment-materials,human-surfaces,hd-rig-transfer,hd-animal-pack,animal-assets,farmer-rig,jockey,farm,race-scene,race,frontier,frontier-rules,frontier-motion,frontier-art,frontier-home,frontier-vehicle,frontier-props,game-touch,home-farm,scenery-batch,frontier-combat,frontier-gun,frontier-zones}.js; do
+          for f in dist/{coat-variants,garment-materials,human-surfaces,hd-rig-transfer,hd-animal-pack,animal-assets,farmer-rig,jockey,farm,race-scene,race,frontier,frontier-rules,frontier-motion,frontier-art,frontier-home,frontier-vehicle,frontier-props,game-touch,home-farm,scenery-batch,frontier-combat,frontier-gun,frontier-zones,frontier-leaper-ai,frontier-leaper-model}.js; do
             node --check "$f"
           done
       - name: Validate full farm and racing regression suite

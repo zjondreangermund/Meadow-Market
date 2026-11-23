@@ -62,5 +62,5 @@ export function fireWeapon(state,origin,direction,targets,wallDistance=Infinity)
  w.magazine--;w.cooldown=CARBINE.interval;
  const hit=traceShot(origin,direction,targets,wallDistance);
  if(hit){hit.target.health=Math.max(0,hit.target.health-CARBINE.damage);if(hit.target.health===0)hit.target.respawnLeft=45;}
- return {ok:true,hit:hit?.target||null,distance:hit?.distance??Math.min(CARBINE.range,wallDistance),message:hit?(hit.target.health===0?'Scout down':'Hit · '+hit.target.health+' health'):''};
+ return {ok:true,hit:hit?.target||null,distance:hit?.distance??Math.min(CARBINE.range,wallDistance),message:hit?(hit.target.health===0?'Leaper disabled':'Hit · '+hit.target.health+' health'):''};
 }

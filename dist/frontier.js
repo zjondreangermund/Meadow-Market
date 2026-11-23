@@ -1,3 +1,5 @@
+import {createLeaperModel} from './frontier-leaper-model.js';
+import {createLeaper,stepLeaper,hearLeaperShot} from './frontier-leaper-ai.js';
 import {CARBINE,fireWeapon,traceShot,startReload,tickWeapon,buyAmmo} from './frontier-combat.js';
 import {createFrontierGun,poseGunArms} from './frontier-gun.js';
 import {installFrontierProps} from './frontier-props.js';
@@ -147,15 +149,13 @@ truck.root.position.set(16,.14,-3);scene.add(truck.root);
 truck.ready.catch(e=>notify('Pickup model could not load. Reload to retry.'));
 const truckAt=state.vehicle;
 truck.root.position.set(truckAt.x,.15,truckAt.z);truck.root.rotation.y=truckAt.heading;
-const raiders=[];
+const enemies=[];
 for(let i=0;i<3;i++){
- const root=new T.Group();scene.add(root);
- box(0,1,0,.65,1.25,.44,m.raider,root);
- ball(0,1.94,0,.32,.33,.32,m.stone,root);
- box(0,1.7,.28,.73,.20,.15,m.darkWood,root);
- const agent={id:'scout-'+i,root,x:90+i*8,z:4+i*4,spawnX:90+i*8,spawnZ:4+i*4,phase:i*2,rig:null,health:100,respawnLeft:0};
- loadFarmer('man').then(rig=>{root.clear();root.add(rig.root);agent.rig=rig;}).catch(()=>{});
- raiders.push(agent);
+ const actor=createLeaperModel();scene.add(actor.root);
+ const agent=Object.assign(createLeaper('leaper-'+i,90+i*8,4+i*4),{root:actor.root,actor});
+ const warning=new T.Mesh(new T.RingGeometry(2.1,2.3,36),new T.MeshBasicMaterial({color:'#f17542',transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}));warning.rotation.x=-Math.PI/2;warning.visible=false;scene.add(warning);agent.warning=warning;
+ actor.ready.catch(()=>notify('Leaper model could not load. Reload to retry.'));
+ enemies.push(agent);
 }
 const gun=createFrontierGun(farmerAnchor);
 let aiming=false,fireHeld=false,aimPitch=0,hitUntil=0;
@@ -274,7 +274,7 @@ function updatePlayer(dt){
 // Combat raycasts ignore actors/markers while retaining actual scenery occlusion.
 function wallDistance(origin,direction){
  scene.updateMatrixWorld(true);raycaster.set(origin,direction);raycaster.far=CARBINE.range;
- const ignored=new Set([farmerAnchor,...raiders.map(a=>a.root),...home.animals.map(a=>a.g)]);
+ const ignored=new Set([farmerAnchor,...enemies.map(a=>a.root),...home.animals.map(a=>a.g)]);
  const objects=[];
  scene.traverse(o=>{if(!o.isMesh||!o.material)return;let p=o;while(p){if(ignored.has(p)||!p.visible)return;p=p.parent;}const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.some(m=>m.isMeshStandardMaterial))objects.push(o);});
  return raycaster.intersectObjects(objects,false)[0]?.distance??Infinity;
@@ -309,15 +309,16 @@ function shoot(){
  gun.update(0,{aiming:true,visible:!state.riding});scene.updateMatrixWorld(true);
  raycaster.setFromCamera(new T.Vector2(0,0),camera);
  const cameraOrigin=raycaster.ray.origin.clone(),cameraDirection=raycaster.ray.direction.clone();
- const wall=wallDistance(cameraOrigin,cameraDirection),target=traceShot(cameraOrigin,cameraDirection,raiders,wall);
+ const wall=wallDistance(cameraOrigin,cameraDirection),target=traceShot(cameraOrigin,cameraDirection,enemies,wall);
  const aimPoint=cameraOrigin.addScaledVector(cameraDirection,target?.distance??Math.min(CARBINE.range,wall));
  const origin=gun.muzzle.getWorldPosition(new T.Vector3()),direction=aimPoint.sub(origin).normalize();
  // Check from the player to the muzzle as well: a barrel touching a wall cannot
  // create bullets on its far side even if the shoulder camera sees around it.
  const shoulder=new T.Vector3(state.x,1.65,state.z),toMuzzle=origin.clone().sub(shoulder),muzzleLength=toMuzzle.length();
  const closeWall=wallDistance(shoulder,toMuzzle.normalize());
- const result=fireWeapon(state,origin,direction,raiders,closeWall<muzzleLength?0:wallDistance(origin,direction));
+ const result=fireWeapon(state,origin,direction,enemies,closeWall<muzzleLength?0:wallDistance(origin,direction));
  if(!result.ok){if(result.message)notify(result.message);fireHeld=false;updateCombatHUD();return;}
+ for(const enemy of enemies)hearLeaperShot(enemy,state);
  gun.shot();tracer.geometry.setFromPoints([origin,origin.clone().addScaledVector(direction,result.distance)]);tracer.visible=true;tracerLeft=.07;
  if(result.hit){hitUntil=performance.now()+140;$('crosshair').classList.add('hit');notify(result.message);}
  save();updateCombatHUD();
@@ -330,22 +331,16 @@ function updateCombatHUD(){
  $('aim').textContent=aiming?'LOWER':'AIM';$('fire').disabled=safe||state.riding||w.reloadLeft>0;
  $('reload').disabled=state.riding||w.reloadLeft>0||w.magazine===CARBINE.magazine||w.reserve===0;
 }
-function updateRaiders(dt){
- let hit=false;
- for(const agent of raiders){
-  agent.phase+=dt*.4;
-  if(agent.health<=0){agent.respawnLeft=Math.max(0,agent.respawnLeft-dt);agent.root.visible=agent.respawnLeft>44.4;agent.root.rotation.z=(45-agent.respawnLeft)*2;
-   if(agent.respawnLeft===0){agent.health=100;agent.x=agent.spawnX;agent.z=agent.spawnZ;agent.root.rotation.z=0;agent.root.visible=true;}continue;}
-  const homeX=agent.spawnX+Math.sin(agent.phase)*3,homeZ=agent.spawnZ+Math.cos(agent.phase)*3;
-  let tx=homeX,tz=homeZ;
-  const distance=Math.hypot(state.x-agent.x,state.z-agent.z);
-  if(zoneAt(state.x)==='red'&&distance<15&&!state.riding){tx=state.x;tz=state.z;}
-  const dx=tx-agent.x,dz=tz-agent.z,mag=Math.hypot(dx,dz);
-  if(mag>.1){moveBody(agent,dx/mag*dt*3.4,dz/mag*dt*3.4);agent.root.rotation.y=Math.atan2(dx,dz);}
-  agent.root.position.set(agent.x,.12,agent.z);agent.rig?.update(dt,mag>.1?3.4:0);
-  if(zoneAt(state.x)==='red'&&!state.riding&&distance<3.4)hit=true;
+function updateEnemies(dt){
+ const player={x:state.x,z:state.z,riding:state.riding,moving:input.forward||input.backward||input.left||input.right};
+ for(const agent of enemies){
+  const result=stepLeaper(agent,dt,player,{move:moveBody,canSee(a,p){const d=Math.hypot(p.x-a.x,p.z-a.z);for(let t=1;t<d;t+=.8)if(blocked(a.x+(p.x-a.x)*t/d,a.z+(p.z-a.z)*t/d,.1))return false;return true;}});
+  state.health=Math.max(0,state.health-result.damage);
+  if(result.damage)notify('Leaper impact! Dodge the marked landing zone.');
+  agent.root.position.set(agent.x,.12+agent.jumpHeight,agent.z);agent.root.rotation.y=agent.heading;agent.actor.update(dt,agent);
+  agent.warning.visible=agent.health>0&&['compress','pounce'].includes(agent.mode)&&!!agent.landing;
+  if(agent.landing)agent.warning.position.set(agent.landing.x,.18,agent.landing.z);
  }
- if(hit){state.health=Math.max(0,state.health-dt*8.5);if(Math.random()<dt*.3)notify('Hostile scavengers spotted you! Retreat or reach your vehicle.');}
 }
 function updateMap(){
  const ctx=$('map').getContext('2d'),w=182,h=112;
@@ -372,7 +367,7 @@ function updateHUD(){
  $('proximity').textContent=near?('E / INTERACT: '+near.title):'Follow the road to the next location.';
  if(zone==='safe')$('objective').textContent=items.length?'Return to the exchange to secure expedition loot.':'Harvest, collect water, visit the exchange, then drive into the Frontier.';
  else if(zone==='frontier')$('objective').textContent='Search the scrapyard or seed cache. Bring resources back safely.';
- else $('objective').textContent='Raid the supply depot and escape the scavenger patrols before being knocked out!';
+ else $('objective').textContent='Raid the supply depot. Watch the Leapers’ lights and dodge their marked pounces!';
  $('drive').textContent=state.riding?'EXIT VEHICLE':'VEHICLE';
  updateCombatHUD();
  updateMap();
@@ -385,7 +380,7 @@ function tick(t){
    if(tickWeapon(state.weapon,dt)){save();updateCombatHUD();}
    updatePlayer(dt);
    simulateNeeds(state,dt);
-   updateRaiders(dt);
+   updateEnemies(dt);
    if(fireHeld)shoot();
    if(state.health<=0){stopCombat();state.weapon.reloadLeft=0;handleResult(knockout(state));truckAt.speed=0;}
  }
