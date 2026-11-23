@@ -110,3 +110,6 @@ See FRONTIER.md Phase 1 browser candidate for changes, automated coverage and ou
 
 ## Shared home farm / touch / model update — 22 November 2026
 Both modes use home-farm.js; the original farm scene construction was extracted without changing its layout/economy. Frontier adds original stable, livestock, saved crop/horse appearance (read only), farm props and a return link to full farm management. Game surface long presses no longer select text/open Copy, while text inputs remain editable. Frontier imports an Innerscene CC0 pickup and Poly Haven textured supply crates; bundled assets and source licences are documented. Inventory/currency remain isolated between modes. GPU/device QA remains unverified.
+
+## Frontier shooting — 23 November 2026
+Fieldguard original 3D carbine, AIM/F, hold FIRE/Space, RELOAD/R; water is now T. Combat and zone rules are isolated in frontier-combat.js/frontier-zones.js; frontier-gun.js builds/animates the original prop and poses the existing farmer's arms. Persisted weapon ammo migrates additively into the Frontier save only. Muzzle/reticle occlusion, safe farm/vehicle/menu/input guards, scout damage/temporary defeat, ammo resupply and timed reload are covered by rule and real-scene tests. Original farm/race files and historical save are unchanged. Still local PvE; GPU/phone QA unverified.
